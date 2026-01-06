@@ -228,21 +228,16 @@ function checkSessionReminder(){
 
   const startHours = [21,22];
   startHours.forEach(h=>{
-    // Rappel et message
     if(hour === h && minute < 15){
       if(Notification.permission === "granted"){
         new Notification("🧠 Il est l'heure de se mettre au travail Zakaria, ouvre l'application !");
       }
       alert("🧠 Il est l'heure de se mettre au travail Zakaria, ouvre l'application !");
-
-      // Démarrage automatique si page ouverte
       if(!run && stats.lastDay!==new Date().toDateString()){
         i = 0;
         startPhase();
       }
     }
-
-    // Annulation si >15min
     if(hour === h && minute >= 15){
       console.log("Session annulée automatiquement !");
       document.getElementById("status").innerText = "❌ Session annulée (15 min dépassées)";
@@ -263,21 +258,35 @@ function checkVacation(){
     const startDate = new Date(startInput);
     const endDate = new Date(endInput);
     if(now >= startDate && now <= endDate){
-      // Bloque tout
       run=false;
       document.getElementById("status").innerText = "⏸️ Congés activés, toutes les sessions sont suspendues.";
       statusBox.innerText = "📌 Congés actifs du "+startInput+" au "+endInput;
-      return true; // vacances actives
+      return true;
     } else {
       statusBox.innerText = "";
-      return false; // pas de congés
+      return false;
     }
   }
   statusBox.innerText = "";
   return false;
 }
-setInterval(()=>{ if(!checkVacation()){ checkSessionReminder(); } },60000);
-checkVacation();
+
+/* ------------------ SAUVEGARDE DES CONGÉS ------------------ */
+document.getElementById("vacationStart").addEventListener("change",()=>{
+  localStorage.setItem("vacationStart", document.getElementById("vacationStart").value);
+  checkVacation();
+});
+document.getElementById("vacationEnd").addEventListener("change",()=>{
+  localStorage.setItem("vacationEnd", document.getElementById("vacationEnd").value);
+  checkVacation();
+});
+window.addEventListener("load",()=>{
+  const start = localStorage.getItem("vacationStart");
+  const end = localStorage.getItem("vacationEnd");
+  if(start) document.getElementById("vacationStart").value = start;
+  if(end) document.getElementById("vacationEnd").value = end;
+  checkVacation();
+});
 
 /* ------------------ BLOQUE GESTES PINCH ZOOM ------------------ */
 document.addEventListener('touchmove', function(e){
@@ -321,4 +330,4 @@ setInterval(blinkDayBox,1000);
 updateUI();
 </script>
 </body>
-  </html>
+</html>
