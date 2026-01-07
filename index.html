@@ -108,12 +108,12 @@ font-weight:bold;margin-bottom:10px}
 </div>
 
 <script>
-/* ------------------ CONFIG ------------------ */
+/* ------------------ CONFIG PHASES ------------------ */
 const phases=[
- {n:"Démarrage",d:10,desc:"Prépare ton esprit",class:"desc-demarrage"},
- {n:"Focus total",d:50,desc:"Zéro distraction",class:"desc-focus"},
- {n:"Mémoire active",d:20,desc:"Explique sans lire",class:"desc-memoire"},
- {n:"Contrôle",d:10,desc:"Auto-évaluation",class:"desc-controle"}
+ {n:"Démarrage",d:5,desc:"Prépare ton esprit",class:"desc-demarrage"},
+ {n:"Focus total",d:20,desc:"Zéro distraction",class:"desc-focus"},
+ {n:"Mémoire active",d:10,desc:"Explique sans lire",class:"desc-memoire"},
+ {n:"Contrôle",d:5,desc:"Auto-évaluation",class:"desc-controle"}
 ];
 
 let i=0,time=0,run=false;
@@ -123,8 +123,7 @@ let stats=JSON.parse(localStorage.getItem("dwStats"))||{
 
 /* ------------------ UI ------------------ */
 function updateUI(){
- document.getElementById("totalHours").innerText=
- (stats.totalMinutes/60).toFixed(1)+" h";
+ document.getElementById("totalHours").innerText=(stats.totalMinutes/60).toFixed(1)+" h";
  document.getElementById("streak").innerText=stats.streak+" jours";
  updateBadges();updateHistory();
  updateDayBox();
@@ -171,6 +170,7 @@ function startPhase(){
  document.getElementById("phaseTitle").innerText=p.n;
  document.getElementById("status").innerText="▶️ En cours";
  run=true;
+ updateTimerDisplay();
 }
 
 function nextPhase(){
@@ -184,7 +184,7 @@ function finishSession(){
  const recap=prompt("Écris ce que tu as retenu :");
  const today=new Date().toDateString();
  if(recap){
-  stats.totalMinutes+=90;
+  stats.totalMinutes+=40; // Somme des durées réelles
   if(stats.lastDay!==today) stats.streak++;
   stats.lastDay=today;
   stats.history[today]=true;
@@ -197,6 +197,37 @@ function finishSession(){
  updateUI();
 }
 
+function updateTimerDisplay(){
+ const min=Math.floor(time/60);
+ const sec=time%60;
+ document.getElementById("timer").innerText=`${min}:${sec.toString().padStart(2,'0')}`;
+}
+
+/* ------------------ LOOP TIMER ------------------ */
+setInterval(()=>{
+ if(run){
+  if(time>0){
+   time--;
+   updateTimerDisplay();
+  }else nextPhase();
+ }
+},1000);
+
+/* ------------------ AUTO START exact à 00h06 Lundi–Vendredi ------------------ */
+setInterval(()=>{
+ const now = new Date();
+ const h = now.getHours();
+ const m = now.getMinutes();
+ const s = now.getSeconds();
+ const day = now.getDay();
+ const isWeek = day >=1 && day <=5;
+
+ if(!run && isWeek && h===0 && m===6 && s===0){
+   i=0;
+   startPhase();
+ }
+},1000);
+
 /* ------------------ HARDCORE ------------------ */
 document.addEventListener("visibilitychange",()=>{
  if(run && document.hidden){
@@ -205,125 +236,73 @@ document.addEventListener("visibilitychange",()=>{
  }
 });
 
-/* ------------------ LOOP ------------------ */
-setInterval(()=>{
- if(run){
-  if(time>0){
-   time--;
-   document.getElementById("timer").innerText=
-   Math.floor(time/60)+":"+String(time%60).padStart(2,"0");
-  }else nextPhase();
- }
-},1000);
-
-/* ------------------ AUTO START, RAPPEL & ANNULATION 15min ------------------ */
-function checkSessionReminder(){
-  const now = new Date();
-  const day = now.getDay(); // 0=Dimanche, 6=Samedi
-  const hour = now.getHours();
-  const minute = now.getMinutes();
-
-  // Vérifie congés
-  if(checkVacation()) return;
-
-  const startHours = [21,22];
-  startHours.forEach(h=>{
-    if(hour === h && minute < 15){
-      if(Notification.permission === "granted"){
-        new Notification("🧠 Il est l'heure de se mettre au travail Zakaria, ouvre l'application !");
-      }
-      alert("🧠 Il est l'heure de se mettre au travail Zakaria, ouvre l'application !");
-      if(!run && stats.lastDay!==new Date().toDateString()){
-        i = 0;
-        startPhase();
-      }
-    }
-    if(hour === h && minute >= 15){
-      console.log("Session annulée automatiquement !");
-      document.getElementById("status").innerText = "❌ Session annulée (15 min dépassées)";
-    }
-  });
-}
-setInterval(checkSessionReminder, 60000);
-checkSessionReminder();
-
 /* ------------------ CONGÉS / VACANCES ------------------ */
 function checkVacation(){
-  const now = new Date();
-  const startInput = document.getElementById("vacationStart").value;
-  const endInput = document.getElementById("vacationEnd").value;
-  const statusBox = document.getElementById("vacationStatus");
+ const now = new Date();
+ const startInput = document.getElementById("vacationStart").value;
+ const endInput = document.getElementById("vacationEnd").value;
+ const statusBox = document.getElementById("vacationStatus");
 
-  if(startInput && endInput){
-    const startDate = new Date(startInput);
-    const endDate = new Date(endInput);
-    if(now >= startDate && now <= endDate){
-      run=false;
-      document.getElementById("status").innerText = "⏸️ Congés activés, toutes les sessions sont suspendues.";
-      statusBox.innerText = "📌 Congés actifs du "+startInput+" au "+endInput;
-      return true;
-    } else {
-      statusBox.innerText = "";
-      return false;
-    }
-  }
-  statusBox.innerText = "";
-  return false;
+ if(startInput && endInput){
+   const startDate = new Date(startInput);
+   const endDate = new Date(endInput);
+   if(now >= startDate && now <= endDate){
+     run=false;
+     document.getElementById("status").innerText = "⏸️ Congés activés, toutes les sessions sont suspendues.";
+     statusBox.innerText = "📌 Congés actifs du "+startInput+" au "+endInput;
+     return true;
+   } else {
+     statusBox.innerText = "";
+     return false;
+   }
+ }
+ statusBox.innerText = "";
+ return false;
 }
 
-/* ------------------ SAUVEGARDE DES CONGÉS ------------------ */
 document.getElementById("vacationStart").addEventListener("change",()=>{
-  localStorage.setItem("vacationStart", document.getElementById("vacationStart").value);
-  checkVacation();
+ localStorage.setItem("vacationStart", document.getElementById("vacationStart").value);
+ checkVacation();
 });
 document.getElementById("vacationEnd").addEventListener("change",()=>{
-  localStorage.setItem("vacationEnd", document.getElementById("vacationEnd").value);
-  checkVacation();
+ localStorage.setItem("vacationEnd", document.getElementById("vacationEnd").value);
+ checkVacation();
 });
 window.addEventListener("load",()=>{
-  const start = localStorage.getItem("vacationStart");
-  const end = localStorage.getItem("vacationEnd");
-  if(start) document.getElementById("vacationStart").value = start;
-  if(end) document.getElementById("vacationEnd").value = end;
-  checkVacation();
+ const start = localStorage.getItem("vacationStart");
+ const end = localStorage.getItem("vacationEnd");
+ if(start) document.getElementById("vacationStart").value = start;
+ if(end) document.getElementById("vacationEnd").value = end;
+ checkVacation();
 });
-
-/* ------------------ BLOQUE GESTES PINCH ZOOM ------------------ */
-document.addEventListener('touchmove', function(e){
- if(e.scale!==undefined && e.scale!==1) e.preventDefault();
-},{passive:false});
-document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
-document.addEventListener('gesturechange', function(e){ e.preventDefault(); });
-document.addEventListener('gestureend', function(e){ e.preventDefault(); });
 
 /* ------------------ CLIGNOTEMENT CASE DU JOUR ------------------ */
 function blinkDayBox(){
-  const dayBox = document.getElementById("dayBox");
-  if(!dayBox) return;
+ const dayBox = document.getElementById("dayBox");
+ if(!dayBox) return;
+ const now = new Date();
+ const hour = now.getHours();
+ const minute = now.getMinutes();
 
-  const now = new Date();
-  const hour = now.getHours();
-  const minute = now.getMinutes();
-
-  if((hour===21 || hour===22) && minute<15){
-    if(!dayBox.classList.contains("blink")){
-      dayBox.classList.add("blink");
-      dayBox.style.transition="0.5s";
-      let on=true;
-      const interval = setInterval(()=>{
-        if(!dayBox.classList.contains("blink")){
-          dayBox.style.background="#22c55e";
-          clearInterval(interval);
-          return;
-        }
-        dayBox.style.background = on?"#fbbf24":"#22c55e";
-        on=!on;
-      },500);
-    }
-  } else {
-    dayBox.classList.remove("blink");
-    dayBox.style.background="#22c55e";
-  }
+ if((hour===0 && minute===6) || (hour===22 && minute<15)){
+   if(!dayBox.classList.contains("blink")){
+     dayBox.classList.add("blink");
+     dayBox.style.transition="0.5s";
+     let on=true;
+     const interval = setInterval(()=>{
+       if(!dayBox.classList.contains("blink")){
+         dayBox.style.background="#22c55e";
+         clearInterval(interval);
+         return;
+       }
+       dayBox.style.background = on?"#fbbf24":"#22c55e";
+       on=!on;
+     },500);
+   }
+ } else {
+   dayBox.classList.remove("blink");
+   dayBox.style.background="#22c55e";
+ }
 }
 setInterval(blinkDayBox,1000);
 
