@@ -95,7 +95,7 @@ font-weight:bold;margin-bottom:10px}
 
 <div id="hardcore">🧠 MODE HARDCORE ACTIVÉ</div>
 
-<!-- ------------------ Gestion Congés ------------------ -->
+<!-- Gestion Congés -->
 <div class="phase">
 <h2>🛌 Gestion des congés / vacances</h2>
 <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -127,13 +127,14 @@ function updateUI(){
  document.getElementById("streak").innerText=stats.streak+" jours";
  updateBadges();updateHistory();
  updateDayBox();
+ saveStats();
 }
 function updateDayBox(){
  const d=new Date();
  const dayNames=["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
  let displayDay = dayNames[d.getDay()];
  const dayBox = document.getElementById("dayBox");
- if(d.getDay()===6){ // Samedi repos
+ if(d.getDay()===6){ 
      displayDay += " (Repos)";
      dayBox.style.background="#4b5563";
  } else {
@@ -156,8 +157,14 @@ function updateHistory(){
  Object.keys(stats.history).slice(-6).forEach(d=>{
   const div=document.createElement("div");
   div.className="card "+(stats.history[d]?"success":"fail");
-  div.innerText=d;h.appendChild(div);
+  div.innerText=d;
+  h.appendChild(div);
  });
+}
+
+/* ------------------ SAUVEGARDE ------------------ */
+function saveStats(){
+ localStorage.setItem("dwStats",JSON.stringify(stats));
 }
 
 /* ------------------ TIMER ------------------ */
@@ -171,8 +178,18 @@ function startPhase(){
  document.getElementById("status").innerText="▶️ En cours";
  run=true;
  updateTimerDisplay();
+ saveStats();
 }
 
+/* Fonction pour enregistrer échec */
+function recordFail(reason){
+ const today=new Date().toDateString();
+ stats.history[today] = false;
+ document.getElementById("status").innerText = `❌ Session annulée (${reason})`;
+ updateUI();
+}
+
+/* ------------------ PHASES ------------------ */
 function nextPhase(){
  i++;
  if(i<phases.length) startPhase();
@@ -181,10 +198,10 @@ function nextPhase(){
 
 function finishSession(){
  run=false;
- const recap=prompt("Écris ce que tu as retenu :");
  const today=new Date().toDateString();
+ const recap=prompt("Écris ce que tu as retenu :");
  if(recap){
-  stats.totalMinutes+=40; // Somme des durées réelles
+  stats.totalMinutes+=40; 
   if(stats.lastDay!==today) stats.streak++;
   stats.lastDay=today;
   stats.history[today]=true;
@@ -193,7 +210,6 @@ function finishSession(){
   stats.history[today]=false;
   document.getElementById("status").innerText="❌ Annulée";
  }
- localStorage.setItem("dwStats",JSON.stringify(stats));
  updateUI();
 }
 
@@ -213,7 +229,7 @@ setInterval(()=>{
  }
 },1000);
 
-/* ------------------ AUTO START exact à 00h55 Lundi–Vendredi ------------------ */
+/* ------------------ AUTO START exact à 00h06 Lundi–Vendredi ------------------ */
 setInterval(()=>{
  const now = new Date();
  const h = now.getHours();
@@ -222,7 +238,7 @@ setInterval(()=>{
  const day = now.getDay();
  const isWeek = day >=1 && day <=5;
 
- if(!run && isWeek && h===00 && m===55 && s===0){
+ if(!run && isWeek && h===01 && m===40 && s===0){
    i=0;
    startPhase();
  }
@@ -233,6 +249,7 @@ document.addEventListener("visibilitychange",()=>{
  if(run && document.hidden){
   run=false;
   alert("❌ Session annulée (Hardcore)");
+  recordFail("Hardcore");
  }
 });
 
@@ -284,7 +301,7 @@ function blinkDayBox(){
  const hour = now.getHours();
  const minute = now.getMinutes();
 
- if((hour===00 && minute===55) || (hour===00 && minute<15)){
+ if((hour===01 && minute===40) || (hour===22 && minute<15)){
    if(!dayBox.classList.contains("blink")){
      dayBox.classList.add("blink");
      dayBox.style.transition="0.5s";
