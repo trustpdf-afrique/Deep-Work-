@@ -39,10 +39,10 @@ font-weight:bold;margin-bottom:10px}
 .desc-controle{background:#f97316}
 
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.card{background:#1e293b;border-radius:12px;padding:10px;text-align:center}
-
-.success{background:#22c55e}
-.fail{background:#ef4444}
+.card{border-radius:12px;padding:10px;text-align:center;background:none;}
+.success{color:#22c55e;font-weight:bold;}
+.fail{color:#ef4444;font-weight:bold;}
+#showMoreBtn{color:#38bdf8;cursor:pointer;text-align:center;margin-top:5px;font-size:13px;}
 
 .badge{background:#fbbf24;color:#020617;padding:6px;border-radius:8px;margin-top:5px}
 
@@ -90,12 +90,13 @@ font-weight:bold;margin-bottom:10px}
 
 <div class="phase">
 <h2>📊 Historique</h2>
-<div id="history" class="grid"></div>
+<div id="history"></div>
+<div id="showMoreBtn" onclick="toggleHistory()">Voir plus</div>
 </div>
 
 <div id="hardcore">🧠 MODE HARDCORE ACTIVÉ</div>
 
-<!-- Gestion Congés -->
+<!-- ------------------ Gestion Congés ------------------ -->
 <div class="phase">
 <h2>🛌 Gestion des congés / vacances</h2>
 <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -110,13 +111,13 @@ font-weight:bold;margin-bottom:10px}
 <script>
 /* ------------------ CONFIG PHASES ------------------ */
 const phases=[
- {n:"Démarrage",d:1,desc:"Prépare ton esprit",class:"desc-demarrage"},
- {n:"Focus total",d:1,desc:"Zéro distraction",class:"desc-focus"},
- {n:"Mémoire active",d:1,desc:"Explique sans lire",class:"desc-memoire"},
- {n:"Contrôle",d:1,desc:"Auto-évaluation",class:"desc-controle"}
+ {n:"Démarrage",d:5,desc:"Prépare ton esprit",class:"desc-demarrage"},
+ {n:"Focus total",d:20,desc:"Zéro distraction",class:"desc-focus"},
+ {n:"Mémoire active",d:10,desc:"Explique sans lire",class:"desc-memoire"},
+ {n:"Contrôle",d:5,desc:"Auto-évaluation",class:"desc-controle"}
 ];
 
-let i=0,time=0,run=false;
+let i=0,time=0,run=false,historyExpanded=false;
 let stats=JSON.parse(localStorage.getItem("dwStats"))||{
  totalMinutes:0,streak:0,lastDay:null,history:{}
 };
@@ -127,19 +128,14 @@ function updateUI(){
  document.getElementById("streak").innerText=stats.streak+" jours";
  updateBadges();updateHistory();
  updateDayBox();
- saveStats();
 }
 function updateDayBox(){
  const d=new Date();
  const dayNames=["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
  let displayDay = dayNames[d.getDay()];
  const dayBox = document.getElementById("dayBox");
- if(d.getDay()===6){ 
-     displayDay += " (Repos)";
-     dayBox.style.background="#4b5563";
- } else {
-     dayBox.style.background="#22c55e";
- }
+ if(d.getDay()===6){ displayDay += " (Repos)"; dayBox.style.background="#4b5563"; }
+ else { dayBox.style.background="#22c55e"; }
  dayBox.innerText = "📆 " + displayDay;
 }
 
@@ -152,20 +148,30 @@ function updateBadges(){
 }
 
 /* ------------------ HISTORIQUE ------------------ */
+function formatDate(date){ 
+ const d = new Date(date);
+ let day = String(d.getDate()).padStart(2,'0');
+ let month = String(d.getMonth()+1).padStart(2,'0');
+ let year = d.getFullYear();
+ return `${day}-${month}-${year}`;
+}
 function updateHistory(){
- const h=document.getElementById("history");h.innerHTML="";
- Object.keys(stats.history).slice(-6).forEach(d=>{
-  const div=document.createElement("div");
-  div.className="card "+(stats.history[d]?"success":"fail");
-  div.innerText=d;
+ const h=document.getElementById("history");
+ h.innerHTML="";
+ const keys = Object.keys(stats.history).sort((a,b)=> new Date(b.split("-").reverse().join("-")) - new Date(a.split("-").reverse().join("-")));
+ const displayKeys = historyExpanded ? keys : keys.slice(0,6);
+ displayKeys.forEach(d=>{
+  const div = document.createElement("div");
+  div.className = stats.history[d] ? "success" : "fail";
+  div.innerText = (stats.history[d]?"✅ ":"🟥 ") + d;
   h.appendChild(div);
  });
+ const btn = document.getElementById("showMoreBtn");
+ btn.innerText = historyExpanded ? "Voir moins" : "Voir plus";
+ if(keys.length<=6) btn.style.display="none";
+ else btn.style.display="block";
 }
-
-/* ------------------ SAUVEGARDE ------------------ */
-function saveStats(){
- localStorage.setItem("dwStats",JSON.stringify(stats));
-}
+function toggleHistory(){ historyExpanded=!historyExpanded; updateHistory(); }
 
 /* ------------------ TIMER ------------------ */
 function startPhase(){
@@ -178,28 +184,12 @@ function startPhase(){
  document.getElementById("status").innerText="▶️ En cours";
  run=true;
  updateTimerDisplay();
- saveStats();
 }
-
-/* Fonction pour enregistrer échec */
-function recordFail(reason){
- const today=new Date().toDateString();
- stats.history[today] = false;
- document.getElementById("status").innerText = `❌ Session annulée (${reason})`;
- updateUI();
-}
-
-/* ------------------ PHASES ------------------ */
-function nextPhase(){
- i++;
- if(i<phases.length) startPhase();
- else finishSession();
-}
-
+function nextPhase(){ i++; if(i<phases.length) startPhase(); else finishSession(); }
 function finishSession(){
  run=false;
- const today=new Date().toDateString();
  const recap=prompt("Écris ce que tu as retenu :");
+ const today=formatDate(new Date());
  if(recap){
   stats.totalMinutes+=40; 
   if(stats.lastDay!==today) stats.streak++;
@@ -210,9 +200,9 @@ function finishSession(){
   stats.history[today]=false;
   document.getElementById("status").innerText="❌ Annulée";
  }
+ localStorage.setItem("dwStats",JSON.stringify(stats));
  updateUI();
 }
-
 function updateTimerDisplay(){
  const min=Math.floor(time/60);
  const sec=time%60;
@@ -222,14 +212,11 @@ function updateTimerDisplay(){
 /* ------------------ LOOP TIMER ------------------ */
 setInterval(()=>{
  if(run){
-  if(time>0){
-   time--;
-   updateTimerDisplay();
-  }else nextPhase();
+  if(time>0){ time--; updateTimerDisplay(); }else nextPhase();
  }
 },1000);
 
-/* ------------------ AUTO START exact à 02h11 Lundi–Vendredi ------------------ */
+/* ------------------ AUTO START exact à 02h44 Lundi–Vendredi ------------------ */
 setInterval(()=>{
  const now = new Date();
  const h = now.getHours();
@@ -237,11 +224,7 @@ setInterval(()=>{
  const s = now.getSeconds();
  const day = now.getDay();
  const isWeek = day >=1 && day <=5;
-
- if(!run && isWeek && h===02 && m===11 && s===0){
-   i=0;
-   startPhase();
- }
+ if(!run && isWeek && h===02 && m===44 && s===0){ i=0; startPhase(); }
 },1000);
 
 /* ------------------ HARDCORE ------------------ */
@@ -249,7 +232,6 @@ document.addEventListener("visibilitychange",()=>{
  if(run && document.hidden){
   run=false;
   alert("❌ Session annulée (Hardcore)");
-  recordFail("Hardcore");
  }
 });
 
@@ -259,7 +241,6 @@ function checkVacation(){
  const startInput = document.getElementById("vacationStart").value;
  const endInput = document.getElementById("vacationEnd").value;
  const statusBox = document.getElementById("vacationStatus");
-
  if(startInput && endInput){
    const startDate = new Date(startInput);
    const endDate = new Date(endInput);
@@ -268,15 +249,11 @@ function checkVacation(){
      document.getElementById("status").innerText = "⏸️ Congés activés, toutes les sessions sont suspendues.";
      statusBox.innerText = "📌 Congés actifs du "+startInput+" au "+endInput;
      return true;
-   } else {
-     statusBox.innerText = "";
-     return false;
-   }
+   } else { statusBox.innerText = ""; return false; }
  }
  statusBox.innerText = "";
  return false;
 }
-
 document.getElementById("vacationStart").addEventListener("change",()=>{
  localStorage.setItem("vacationStart", document.getElementById("vacationStart").value);
  checkVacation();
@@ -300,18 +277,13 @@ function blinkDayBox(){
  const now = new Date();
  const hour = now.getHours();
  const minute = now.getMinutes();
-
- if((hour===02 && minute===11) || (hour===22 && minute<15)){
+ if((hour===02 && minute===44) || (hour===22 && minute<15)){
    if(!dayBox.classList.contains("blink")){
      dayBox.classList.add("blink");
      dayBox.style.transition="0.5s";
      let on=true;
      const interval = setInterval(()=>{
-       if(!dayBox.classList.contains("blink")){
-         dayBox.style.background="#22c55e";
-         clearInterval(interval);
-         return;
-       }
+       if(!dayBox.classList.contains("blink")){ dayBox.style.background="#22c55e"; clearInterval(interval); return; }
        dayBox.style.background = on?"#fbbf24":"#22c55e";
        on=!on;
      },500);
