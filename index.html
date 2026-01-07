@@ -9,9 +9,7 @@ body{
   margin:0;font-family:Arial,Helvetica,sans-serif;
   background:#0f172a;color:#fff;
   display:flex;justify-content:center;align-items:center;
-  min-height:100vh;
-  touch-action: pan-x pan-y;
-  overscroll-behavior: none;
+  min-height:100vh;touch-action: pan-x pan-y;overscroll-behavior: none;
 }
 .app{
   background:#020617;width:100%;max-width:460px;
@@ -37,12 +35,13 @@ font-weight:bold;margin-bottom:10px}
 .desc-focus{background:#22c55e}
 .desc-memoire{background:#8b5cf6}
 .desc-controle{background:#f97316}
+.desc-pause{background:#6b7280;color:#fff}
 
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.card{border-radius:12px;padding:10px;text-align:center;background:none;}
-.success{color:#22c55e;font-weight:bold;}
-.fail{color:#ef4444;font-weight:bold;}
-#showMoreBtn{color:#38bdf8;cursor:pointer;text-align:center;margin-top:5px;font-size:13px;}
+.card{background:#1e293b;border-radius:12px;padding:10px;text-align:center}
+
+.success{}
+.fail{}
 
 .badge{background:#fbbf24;color:#020617;padding:6px;border-radius:8px;margin-top:5px}
 
@@ -53,6 +52,10 @@ font-weight:bold;margin-bottom:10px}
   padding:8px 12px;border-radius:12px;margin-bottom:12px;font-weight:bold;
   transition:0.3s;
 }
+
+#history{max-height:120px;overflow:hidden;transition:0.3s;}
+#history.expanded{max-height:none;}
+#showMore{color:#38bdf8;cursor:pointer;text-align:center;margin-top:5px;font-size:13px;}
 </style>
 </head>
 
@@ -90,13 +93,12 @@ font-weight:bold;margin-bottom:10px}
 
 <div class="phase">
 <h2>📊 Historique</h2>
-<div id="history"></div>
-<div id="showMoreBtn" onclick="toggleHistory()">Voir plus</div>
+<div id="history" class="grid"></div>
+<div id="showMore">Voir plus</div>
 </div>
 
 <div id="hardcore">🧠 MODE HARDCORE ACTIVÉ</div>
 
-<!-- ------------------ Gestion Congés ------------------ -->
 <div class="phase">
 <h2>🛌 Gestion des congés / vacances</h2>
 <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -111,13 +113,14 @@ font-weight:bold;margin-bottom:10px}
 <script>
 /* ------------------ CONFIG PHASES ------------------ */
 const phases=[
- {n:"Démarrage",d:5,desc:"Prépare ton esprit",class:"desc-demarrage"},
- {n:"Focus total",d:20,desc:"Zéro distraction",class:"desc-focus"},
- {n:"Mémoire active",d:10,desc:"Explique sans lire",class:"desc-memoire"},
- {n:"Contrôle",d:5,desc:"Auto-évaluation",class:"desc-controle"}
+ {n:"Démarrage",d:5,title:"Démarrage",desc:"Libère ton esprit et mets-toi en mode concentration maximale. Prépare-toi à apprendre et à devenir exceptionnel.",class:"desc-demarrage"},
+ {n:"Focus total",d:40,title:"Focus total",desc:"Rien ne peut te détourner. Sois pleinement immergé dans ta tâche. Chaque seconde compte.",class:"desc-focus"},
+ {n:"Mémoire active",d:20,title:"Mémoire active",desc:"Exprime ce que tu as appris avec tes propres mots. Retient vraiment la connaissance et transforme-la en pouvoir.",class:"desc-memoire"},
+ {n:"Pause",d:10,title:"Pause",desc:"Détends-toi un peu, respire et reprends des forces pour mieux continuer.",class:"desc-pause"},
+ {n:"Contrôle",d:15,title:"Contrôle",desc:"Teste-toi, corrige tes erreurs et progresse. Renforce ta compréhension pour devenir plus fort à chaque étape.",class:"desc-controle"}
 ];
 
-let i=0,time=0,run=false,historyExpanded=false;
+let i=0,time=0,run=false;
 let stats=JSON.parse(localStorage.getItem("dwStats"))||{
  totalMinutes:0,streak:0,lastDay:null,history:{}
 };
@@ -134,8 +137,12 @@ function updateDayBox(){
  const dayNames=["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
  let displayDay = dayNames[d.getDay()];
  const dayBox = document.getElementById("dayBox");
- if(d.getDay()===6){ displayDay += " (Repos)"; dayBox.style.background="#4b5563"; }
- else { dayBox.style.background="#22c55e"; }
+ if(d.getDay()===6){ 
+     displayDay += " (Repos)";
+     dayBox.style.background="#4b5563";
+ } else {
+     dayBox.style.background="#22c55e";
+ }
  dayBox.innerText = "📆 " + displayDay;
 }
 
@@ -148,61 +155,76 @@ function updateBadges(){
 }
 
 /* ------------------ HISTORIQUE ------------------ */
-function formatDate(date){ 
- const d = new Date(date);
- let day = String(d.getDate()).padStart(2,'0');
- let month = String(d.getMonth()+1).padStart(2,'0');
- let year = d.getFullYear();
- return `${day}-${month}-${year}`;
-}
 function updateHistory(){
- const h=document.getElementById("history");
- h.innerHTML="";
- const keys = Object.keys(stats.history).sort((a,b)=> new Date(b.split("-").reverse().join("-")) - new Date(a.split("-").reverse().join("-")));
- const displayKeys = historyExpanded ? keys : keys.slice(0,6);
- displayKeys.forEach(d=>{
-  const div = document.createElement("div");
-  div.className = stats.history[d] ? "success" : "fail";
-  div.innerText = (stats.history[d]?"✅ ":"🟥 ") + d;
+ const h=document.getElementById("history");h.innerHTML="";
+ const dates = Object.keys(stats.history).sort((a,b)=>new Date(a)-new Date(b));
+ dates.forEach(d=>{
+  const div=document.createElement("div");
+  div.className="card";
+  div.innerText=(stats.history[d]?"✅":"🟥")+" : "+d;
   h.appendChild(div);
  });
- const btn = document.getElementById("showMoreBtn");
- btn.innerText = historyExpanded ? "Voir moins" : "Voir plus";
- if(keys.length<=6) btn.style.display="none";
- else btn.style.display="block";
+
+ // Voir moins / Voir plus
+ const showMore = document.getElementById("showMore");
+ if(dates.length>6){
+   h.classList.remove("expanded");
+   showMore.style.display="block";
+ } else showMore.style.display="none";
+
+ showMore.onclick=()=>{
+   h.classList.toggle("expanded");
+   showMore.innerText = h.classList.contains("expanded")?"Voir moins":"Voir plus";
+ };
 }
-function toggleHistory(){ historyExpanded=!historyExpanded; updateHistory(); }
 
 /* ------------------ TIMER ------------------ */
 function startPhase(){
  const p=phases[i];
  time=p.d*60;
  const phaseDesc=document.getElementById("phaseDesc");
- phaseDesc.innerText=p.desc;
- phaseDesc.className="desc-box "+p.class;
+
+ if(p.n === "Pause"){
+     phaseDesc.innerHTML=`<b>⏸️ ${p.title}</b><br>${p.desc}`;
+     phaseDesc.className="desc-box desc-pause";
+     document.getElementById("timer").style.color="#94a3b8";
+ } else {
+     phaseDesc.innerHTML=`<b>${p.title}</b><br>${p.desc}`;
+     phaseDesc.className="desc-box "+p.class;
+     document.getElementById("timer").style.color="#22c55e";
+ }
+
  document.getElementById("phaseTitle").innerText=p.n;
  document.getElementById("status").innerText="▶️ En cours";
  run=true;
  updateTimerDisplay();
 }
-function nextPhase(){ i++; if(i<phases.length) startPhase(); else finishSession(); }
+
+function nextPhase(){
+ i++;
+ if(i<phases.length) startPhase();
+ else finishSession();
+}
+
 function finishSession(){
  run=false;
  const recap=prompt("Écris ce que tu as retenu :");
- const today=formatDate(new Date());
+ const today=new Date();
+ const todayStr = String(today.getDate()).padStart(2,"0")+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+today.getFullYear();
  if(recap){
-  stats.totalMinutes+=40; 
-  if(stats.lastDay!==today) stats.streak++;
-  stats.lastDay=today;
-  stats.history[today]=true;
+  stats.totalMinutes+=90;
+  if(stats.lastDay!==todayStr) stats.streak++;
+  stats.lastDay=todayStr;
+  stats.history[todayStr]=true;
   document.getElementById("status").innerText="✅ Validée";
  }else{
-  stats.history[today]=false;
+  stats.history[todayStr]=false;
   document.getElementById("status").innerText="❌ Annulée";
  }
  localStorage.setItem("dwStats",JSON.stringify(stats));
  updateUI();
 }
+
 function updateTimerDisplay(){
  const min=Math.floor(time/60);
  const sec=time%60;
@@ -212,11 +234,14 @@ function updateTimerDisplay(){
 /* ------------------ LOOP TIMER ------------------ */
 setInterval(()=>{
  if(run){
-  if(time>0){ time--; updateTimerDisplay(); }else nextPhase();
+  if(time>0){
+   time--;
+   updateTimerDisplay();
+  }else nextPhase();
  }
 },1000);
 
-/* ------------------ AUTO START exact à 02h44 Lundi–Vendredi ------------------ */
+/* ------------------ AUTO START exact à 21h00 Lundi–Vendredi ------------------ */
 setInterval(()=>{
  const now = new Date();
  const h = now.getHours();
@@ -224,7 +249,11 @@ setInterval(()=>{
  const s = now.getSeconds();
  const day = now.getDay();
  const isWeek = day >=1 && day <=5;
- if(!run && isWeek && h===02 && m===44 && s===0){ i=0; startPhase(); }
+
+ if(!run && isWeek && h===21 && m===00 && s===0){
+   i=0;
+   startPhase();
+ }
 },1000);
 
 /* ------------------ HARDCORE ------------------ */
@@ -241,6 +270,7 @@ function checkVacation(){
  const startInput = document.getElementById("vacationStart").value;
  const endInput = document.getElementById("vacationEnd").value;
  const statusBox = document.getElementById("vacationStatus");
+
  if(startInput && endInput){
    const startDate = new Date(startInput);
    const endDate = new Date(endInput);
@@ -249,11 +279,15 @@ function checkVacation(){
      document.getElementById("status").innerText = "⏸️ Congés activés, toutes les sessions sont suspendues.";
      statusBox.innerText = "📌 Congés actifs du "+startInput+" au "+endInput;
      return true;
-   } else { statusBox.innerText = ""; return false; }
+   } else {
+     statusBox.innerText = "";
+     return false;
+   }
  }
  statusBox.innerText = "";
  return false;
 }
+
 document.getElementById("vacationStart").addEventListener("change",()=>{
  localStorage.setItem("vacationStart", document.getElementById("vacationStart").value);
  checkVacation();
@@ -277,13 +311,18 @@ function blinkDayBox(){
  const now = new Date();
  const hour = now.getHours();
  const minute = now.getMinutes();
- if((hour===02 && minute===44) || (hour===22 && minute<15)){
+
+ if((hour===21 && minute===00) || (hour===22 && minute<15)){
    if(!dayBox.classList.contains("blink")){
      dayBox.classList.add("blink");
      dayBox.style.transition="0.5s";
      let on=true;
      const interval = setInterval(()=>{
-       if(!dayBox.classList.contains("blink")){ dayBox.style.background="#22c55e"; clearInterval(interval); return; }
+       if(!dayBox.classList.contains("blink")){
+         dayBox.style.background="#22c55e";
+         clearInterval(interval);
+         return;
+       }
        dayBox.style.background = on?"#fbbf24":"#22c55e";
        on=!on;
      },500);
