@@ -229,7 +229,7 @@ setInterval(()=>{
  }
 },1000);
 
-/* ------------------ AUTO START exact à 00h06 Lundi–Vendredi ------------------ */
+/* ------------------ AUTO START exact à 01h50 Lundi–Vendredi ------------------ */
 setInterval(()=>{
  const now = new Date();
  const h = now.getHours();
@@ -238,7 +238,7 @@ setInterval(()=>{
  const day = now.getDay();
  const isWeek = day >=1 && day <=5;
 
- if(!run && isWeek && h===01 && m===40 && s===0){
+ if(!run && isWeek && h===01 && m===50 && s===0){
    i=0;
    startPhase();
  }
@@ -301,7 +301,7 @@ function blinkDayBox(){
  const hour = now.getHours();
  const minute = now.getMinutes();
 
- if((hour===01 && minute===40) || (hour===22 && minute<15)){
+ if((hour===01 && minute===50) || (hour===22 && minute<15)){
    if(!dayBox.classList.contains("blink")){
      dayBox.classList.add("blink");
      dayBox.style.transition="0.5s";
