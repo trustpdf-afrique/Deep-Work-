@@ -248,7 +248,7 @@ setInterval(()=>{
  const m = now.getMinutes();
  const s = now.getSeconds();
  const day = now.getDay();
- const isWeek = day >=1 && day <=5;
+ const isWeek = (day >=1 && day <=5) || day === 0;
 
  if(!run && isWeek && h===21 && m===00 && s===0){
    i=0;
