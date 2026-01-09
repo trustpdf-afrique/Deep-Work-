@@ -40,9 +40,6 @@ font-weight:bold;margin-bottom:10px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .card{background:#1e293b;border-radius:12px;padding:10px;text-align:center}
 
-.success{}
-.fail{}
-
 .badge{background:#fbbf24;color:#020617;padding:6px;border-radius:8px;margin-top:5px}
 
 #hardcore{color:#ef4444;font-weight:bold;text-align:center;margin-top:10px}
@@ -56,6 +53,23 @@ font-weight:bold;margin-bottom:10px}
 #history{max-height:120px;overflow:hidden;transition:0.3s;}
 #history.expanded{max-height:none;}
 #showMore{color:#38bdf8;cursor:pointer;text-align:center;margin-top:5px;font-size:13px;}
+
+/* ------------------ RÉCOMPENSES VISUELLES ------------------ */
+.reward{
+  position:fixed;
+  top:-40px;
+  font-size:28px;
+  animation:fall linear forwards;
+  pointer-events:none;
+  z-index:9999;
+}
+
+@keyframes fall{
+  to{
+    transform:translateY(110vh) rotate(360deg);
+    opacity:0;
+  }
+}
 </style>
 </head>
 
@@ -146,12 +160,106 @@ function updateDayBox(){
  dayBox.innerText = "📆 " + displayDay;
 }
 
-/* ------------------ BADGES ------------------ */
+/* ------------------ PLUIE DE RÉCOMPENSE ------------------ */  
+function rewardRain(emoji){  
+  const duration = 5000;  
+  const interval = setInterval(()=>{  
+    const r = document.createElement("div");  
+    r.className = "reward";  
+    r.innerText = emoji;  
+    r.style.left = Math.random()*100 + "vw";  
+    r.style.animationDuration = (3 + Math.random()*2) + "s";  
+    document.body.appendChild(r);  
+    setTimeout(()=>r.remove(),5000);  
+  },200);  
+  setTimeout(()=>clearInterval(interval), duration);  
+}
+
+/* ------------------ BADGES ALPHA ------------------ */
 function updateBadges(){
- const b=document.getElementById("badges");b.innerHTML="";
- if(stats.streak>=90)b.innerHTML+="<div class='badge'>🥇 Légende</div>";
- if(stats.streak>=30)b.innerHTML+="<div class='badge'>🥈 Monk</div>";
- if(stats.streak>=7)b.innerHTML+="<div class='badge'>🥉 Alpha</div>";
+ const b = document.getElementById("badges");
+ const dayBox = document.getElementById("dayBox");
+ b.innerHTML = "";
+ let todayBadge = "";
+
+ // 🥉 Alpha
+ if(stats.streak >= 7){
+   const badgeAlpha = document.createElement("div");
+   badgeAlpha.className = "badge";
+   badgeAlpha.innerText = "🥉 Alpha";
+   b.appendChild(badgeAlpha);
+   todayBadge = "Alpha";
+
+   if(stats.streak === 7){
+     alert("🥉 Bravo ! Tu es maintenant Alpha !");
+     rewardRain("🔥");
+
+     let on=true;
+     const blink=setInterval(()=>{
+       badgeAlpha.style.background = on?"#fbbf24":"#1e293b";
+       on=!on;
+     },500);
+     setTimeout(()=>clearInterval(blink),5000);
+   }
+ }
+
+ // 🥈 Monk
+ if(stats.streak >= 30){
+   const badgeMonk = document.createElement("div");
+   badgeMonk.className = "badge";
+   badgeMonk.innerText = "🥈 Monk";
+   b.appendChild(badgeMonk);
+   todayBadge = "Monk";
+
+   if(stats.streak === 30){
+     alert("🥈 Incroyable ! Tu es Monk !");
+     rewardRain("🧘‍♂️");
+
+     let on=true;
+     const blink=setInterval(()=>{
+       badgeMonk.style.background = on?"#fbbf24":"#1e293b";
+       on=!on;
+     },500);
+     setTimeout(()=>clearInterval(blink),5000);
+   }
+ }
+
+ // 🥇 Légende
+ if(stats.streak >= 90){
+   const badgeLegend = document.createElement("div");
+   badgeLegend.className = "badge";
+   badgeLegend.innerText = "🥇 Légende";
+   b.appendChild(badgeLegend);
+   todayBadge = "Légende";
+
+   if(stats.streak === 90){
+     alert("🥇 TU ES UNE LÉGENDE !");
+     rewardRain("🏆");
+
+     let on=true;
+     const blink=setInterval(()=>{
+       badgeLegend.style.background = on?"#fbbf24":"#1e293b";
+       on=!on;
+     },500);
+     setTimeout(()=>clearInterval(blink),5000);
+   }
+ }
+
+ // ✨ Célébration du jour (5s)
+ if(todayBadge){
+   dayBox.innerText = dayBox.innerText.split(" – ")[0] + " – " + todayBadge;
+
+   let on=true;
+   const blinkBox=setInterval(()=>{
+     dayBox.style.background = on?"#fbbf24":"#22c55e";
+     on=!on;
+   },500);
+
+   setTimeout(()=>{
+     clearInterval(blinkBox);
+     dayBox.style.background="#22c55e";
+   },5000);
+ }
 }
 
 /* ------------------ HISTORIQUE ------------------ */
@@ -165,7 +273,6 @@ function updateHistory(){
   h.appendChild(div);
  });
 
- // Voir moins / Voir plus
  const showMore = document.getElementById("showMore");
  if(dates.length>6){
    h.classList.remove("expanded");
@@ -200,38 +307,61 @@ function startPhase(){
  updateTimerDisplay();
 }
 
-function nextPhase(){
- i++;
- if(i<phases.length) startPhase();
- else finishSession();
+/* ------------------ PHASES + PLUIE PAR PHASE ------------------ */
+function nextPhase(){    
+  i++;    
+  if(i < phases.length){    
+      startPhase();    
+
+      // 💥 Emoji selon la phase précédente
+      let emoji = "✨";
+      const prevPhase = phases[i-1].n;
+      if(prevPhase === "Démarrage") emoji = "🚀";
+      else if(prevPhase === "Focus total") emoji = "🔥";
+      else if(prevPhase === "Mémoire active") emoji = "🧠";
+      else if(prevPhase === "Pause") emoji = "⏸️";
+      else if(prevPhase === "Contrôle") emoji = "🏆";
+
+      rewardRain(emoji);    
+  } else {
+      finishSession();    
+  }
 }
 
+/* ------------------ FIN DE SESSION + NOTE ------------------ */
 function finishSession(){
  run=false;
- const recap=prompt("Écris ce que tu as retenu :");
- const today=new Date();
+ const recap = prompt("Écris ce que tu as retenu :");
+ const today = new Date();
  const todayStr = String(today.getDate()).padStart(2,"0")+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+today.getFullYear();
+
  if(recap){
-  stats.totalMinutes+=90;
-  if(stats.lastDay!==todayStr) stats.streak++;
-  stats.lastDay=todayStr;
-  stats.history[todayStr]=true;
-  document.getElementById("status").innerText="✅ Validée";
- }else{
-  stats.history[todayStr]=false;
-  document.getElementById("status").innerText="❌ Annulée";
+  stats.totalMinutes += 90;
+  if(stats.lastDay !== todayStr) stats.streak++;
+  stats.lastDay = todayStr;
+  stats.history[todayStr] = true;
+
+  // ------------------ NOTE AUTOMATIQUE ------------------
+  let score = 0;
+  const len = recap.trim().length;
+  if(len < 20) score = 0;
+  else if(len < 50) score = 5;
+  else if(len < 100) score = 7;
+  else score = 10;
+
+  alert(`✅ Session validée !\nTa note pour le récapitulatif : ${score}/10 🎉`);
+  rewardRain("🎉");  // Pluie finale générale
+
+ } else {
+  stats.history[todayStr] = false;
+  alert("❌ Session annulée (tu n'as rien écrit)");
  }
- localStorage.setItem("dwStats",JSON.stringify(stats));
+
+ localStorage.setItem("dwStats", JSON.stringify(stats));
  updateUI();
 }
 
-function updateTimerDisplay(){
- const min=Math.floor(time/60);
- const sec=time%60;
- document.getElementById("timer").innerText=`${min}:${sec.toString().padStart(2,'0')}`;
-}
-
-/* ------------------ LOOP TIMER ------------------ */
+/* ------------------ TIMER LOOP ------------------ */
 setInterval(()=>{
  if(run){
   if(time>0){
@@ -241,7 +371,7 @@ setInterval(()=>{
  }
 },1000);
 
-/* ------------------ AUTO START exact à 21h00 Lundi–Vendredi ------------------ */
+/* ------------------ AUTO START ------------------ */
 setInterval(()=>{
  const now = new Date();
  const h = now.getHours();
@@ -250,7 +380,7 @@ setInterval(()=>{
  const day = now.getDay();
  const isWeek = (day >=1 && day <=5) || day === 0;
 
- if(!run && isWeek && h===21 && m===00 && s===0){
+ if(!run && isWeek && h===21 && m===0 && s===0){
    i=0;
    startPhase();
  }
@@ -264,7 +394,7 @@ document.addEventListener("visibilitychange",()=>{
  }
 });
 
-/* ------------------ CONGÉS / VACANCES ------------------ */
+/* ------------------ VACANCES ------------------ */
 function checkVacation(){
  const now = new Date();
  const startInput = document.getElementById("vacationStart").value;
@@ -304,7 +434,7 @@ window.addEventListener("load",()=>{
  checkVacation();
 });
 
-/* ------------------ CLIGNOTEMENT CASE DU JOUR ------------------ */
+/* ------------------ DAY BOX BLINK ------------------ */
 function blinkDayBox(){
  const dayBox = document.getElementById("dayBox");
  if(!dayBox) return;
@@ -333,6 +463,13 @@ function blinkDayBox(){
  }
 }
 setInterval(blinkDayBox,1000);
+
+/* ------------------ TIMER DISPLAY ------------------ */
+function updateTimerDisplay(){
+ const min=Math.floor(time/60);
+ const sec=time%60;
+ document.getElementById("timer").innerText=`${min}:${sec.toString().padStart(2,'0')}`;
+}
 
 updateUI();
 </script>
