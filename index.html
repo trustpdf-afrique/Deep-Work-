@@ -2,9 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>DEEP WORK ZAKARIA</title>
-
 <style>
 body{
  margin:0;font-family:Arial,Helvetica,sans-serif;
@@ -17,35 +16,43 @@ body{
  border-radius:20px;padding:20px;
  box-shadow:0 20px 50px rgba(0,0,0,.7)
 }
-h1{text-align:center;color:#38bdf8;margin:0}
+h1{text-align:center;color:#38bdf8;margin-bottom:10px}
 .timer{font-size:52px;text-align:center;color:#22c55e;font-weight:bold}
-.info{text-align:center;color:#38bdf8;font-size:13px;margin-bottom:6px}
+.info{text-align:center;color:#38bdf8;font-size:13px;margin-bottom:8px}
 .phase{background:#111827;border-radius:14px;padding:12px;margin-bottom:10px}
 input,select,button{
  width:100%;padding:8px;border-radius:8px;border:none;margin-top:6px;
  font-weight:bold;
 }
-button{background:#22c55e;color:#020617;cursor:pointer}
+button{background:#22c55e;color:#020617}
 button.locked{background:#4b5563;color:#9ca3af}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .card{background:#1e293b;border-radius:12px;padding:10px;text-align:center}
 .badge{background:#fbbf24;color:#020617;padding:6px;border-radius:8px;margin-top:5px}
-#history{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.desc-box{
+ margin-top:6px;padding:10px;border-radius:10px;
+ text-align:center;font-size:13px
+}
+.desc-demarrage{background:#0ea5e9}
+.desc-focus{background:#22c55e}
+.desc-memoire{background:#8b5cf6}
+.desc-pause{background:#6b7280}
+.desc-controle{background:#f97316}
+#history div{font-size:13px;text-align:left}
 </style>
 </head>
-
 <body>
 <div class="app">
 
 <h1>🧠 DEEP WORK ZAKARIA</h1>
 
 <div class="timer" id="timer">--:--</div>
-<div class="info" id="status">⏳ En attente</div>
+<div class="info" id="status">⏳ Attente</div>
 
-<!-- CONFIG -->
 <div class="phase">
  <h3>⏰ Heure</h3>
  <input type="time" id="startTime">
+
  <h3>📚 Matière</h3>
  <select id="subject">
   <option value="">Choisir</option>
@@ -53,71 +60,119 @@ button.locked{background:#4b5563;color:#9ca3af}
   <option>FRANÇAIS</option><option>MATHS</option><option>SVT</option>
   <option>MUSIQUE</option><option>ESPAGNOL</option><option>EDHC</option>
  </select>
- <h3>⏱ Minutes</h3>
- <input type="number" id="t1" value="5">
- <input type="number" id="t2" value="40">
- <input type="number" id="t3" value="20">
- <input type="number" id="t4" value="10">
- <input type="number" id="t5" value="15">
+
+ <!-- Phase actuelle avec timer -->
+ <div id="currentPhase" class="desc-box desc-demarrage">
+  Phase actuelle : --:--
+ </div>
+
+ <!-- DESCRIPTION AUTOMATIQUE -->
+ <div id="descBox" class="desc-box desc-demarrage">
+  La description de la session apparaîtra ici.
+ </div>
 </div>
 
-<!-- STATS -->
 <div class="grid">
- <div class="card">⏱ Total<br><b id="totalHours">0 h</b></div>
- <div class="card">🔥 Streak<br><b id="streak">0</b></div>
+ <div class="card">⏱ Heures totales<br><b id="totalHours">0 h</b></div>
+ <div class="card">🔥 Streak actuel<br><b id="streak">0</b></div>
 </div>
 
 <div class="phase"><h3>🏆 Badges</h3><div id="badges"></div></div>
 <div class="phase"><h3>📊 Historique</h3><div id="history"></div></div>
 
-<!-- BOUTON ENREGISTRER -->
 <button id="saveBtn">🔒 ENREGISTRER</button>
 
 </div>
 
 <script>
-let locked=false,run=false,i=0,time=0,phases=[];
-let stats=JSON.parse(localStorage.getItem("dwStats"))||{
- total:0,streak:0,last:null,history:[]
+const phaseModels=[
+ {n:"Démarrage",desc:"Libère ton esprit et mets-toi en mode concentration maximale. Prépare-toi à apprendre et à devenir exceptionnel.",class:"desc-demarrage"},
+ {n:"Focus total",desc:"Rien ne peut te détourner. Sois pleinement immergé dans ta tâche. Chaque seconde compte.",class:"desc-focus"},
+ {n:"Mémoire active",desc:"Exprime ce que tu as appris avec tes propres mots. Retient vraiment la connaissance et transforme-la en pouvoir.",class:"desc-memoire"},
+ {n:"Pause",desc:"Détends-toi un peu, respire et reprends des forces pour mieux continuer.",class:"desc-pause"},
+ {n:"Contrôle",desc:"Teste-toi, corrige tes erreurs et progresse. Renforce ta compréhension pour devenir plus fort à chaque étape.",class:"desc-controle"}
+];
+
+const durationsBySubject = {
+ "PC":[5,30,20,5,10],
+ "HG":[5,25,20,5,10],
+ "ANGLAIS":[5,20,20,5,10],
+ "FRANÇAIS":[5,40,20,10,15],
+ "MATHS":[5,30,25,5,10],
+ "SVT":[5,25,20,5,10],
+ "MUSIQUE":[5,20,15,5,10],
+ "ESPAGNOL":[5,20,20,5,10],
+ "EDHC":[5,20,15,5,10]
 };
+
+let phases=[],i=0,time=0,run=false,locked=false;
+let sessionMinutes=0,resetTimeout=null;
+
+let stats=JSON.parse(localStorage.getItem("dwStats"))||{
+ totalMinutes:0,streak:0,lastSuccess:null,history:[]
+};
+
+function todayStr(){ return new Date().toLocaleDateString("fr-FR"); }
 
 function lockAll(){
  document.querySelectorAll("input,select").forEach(e=>e.disabled=true);
- saveBtn.classList.add("locked");
- saveBtn.disabled=true;
+ saveBtn.disabled=true; saveBtn.classList.add("locked");
  locked=true;
 }
 
+// Remplissage automatique des minutes selon matière
+subject.addEventListener("change", ()=>{
+ const val = subject.value;
+ if(durationsBySubject[val]){
+   phases = phaseModels.map((p,idx)=>({...p,d:durationsBySubject[val][idx]}));
+   sessionMinutes = durationsBySubject[val].reduce((a,b)=>a+b,0);
+ }
+});
+
 saveBtn.onclick=()=>{
- if(!startTime.value||!subject.value){alert("⛔ Remplis tout");return;}
- phases=[
-  {n:"Démarrage",d:+t1.value},
-  {n:"Focus",d:+t2.value},
-  {n:"Mémoire",d:+t3.value},
-  {n:"Pause",d:+t4.value},
-  {n:"Contrôle",d:+t5.value}
- ];
+ if(!startTime.value||!subject.value){alert("⛔ Remplis tout"); return;}
  lockAll();
- status.innerText="🔒 Configuration enregistrée";
+ status.innerText="⏳ Attente";
 };
 
 function startPhase(){
  const p=phases[i];
  time=p.d*60;
- status.innerText="▶️ "+p.n+" ("+subject.value+")";
+ status.innerText="▶️ En cours";
+ descBox.className="desc-box "+p.class;
+ descBox.innerText=p.desc;
  run=true;
+}
+
+function finishSession(success){
+ run=false;
+ status.innerText="✅ Terminé";
+
+ stats.history.unshift({date:todayStr(),subject:subject.value,ok:success});
+ if(success){
+  stats.totalMinutes+=sessionMinutes;
+  if(stats.lastSuccess!==todayStr()){ stats.streak++; stats.lastSuccess=todayStr();}
+ }
+ localStorage.setItem("dwStats",JSON.stringify(stats));
+ updateUI();
+
+ resetTimeout=setTimeout(()=>{ status.innerText="⏳ Attente"; currentPhase.innerText="Phase actuelle : --:--"; },120000);
+}
+
+function updateTimerDisplay(){
+ const min=Math.floor(time/60);
+ const sec=time%60;
+ timer.innerText=`${min}:${sec.toString().padStart(2,'0')}`;
+
+ if(phases[i]){
+   currentPhase.innerText = `Phase actuelle : ${phases[i].n} ⏱ ${min}:${sec.toString().padStart(2,'0')}`;
+ }
 }
 
 setInterval(()=>{
  if(run){
-  if(time>0){
-   time--;
-   timer.innerText=Math.floor(time/60)+":"+String(time%60).padStart(2,"0");
-  }else{
-   i++;
-   if(i<phases.length) startPhase();
-   else finish(true);
-  }
+  if(time>0){ time--; updateTimerDisplay(); }
+  else{ i++; if(i<phases.length) startPhase(); else finishSession(true); }
  }
 },1000);
 
@@ -125,41 +180,21 @@ setInterval(()=>{
  if(!locked||run) return;
  const now=new Date();
  const [h,m]=startTime.value.split(":").map(Number);
- if(now.getHours()===h && now.getMinutes()===m && now.getSeconds()===0){
-  i=0;startPhase();
- }
+ if(now.getHours()===h && now.getMinutes()===m && now.getSeconds()===0){ i=0; startPhase(); }
 },1000);
 
-function finish(success){
- run=false;
- const today=new Date().toLocaleDateString();
- stats.history.push({date:today,ok:success});
- if(success){
-  stats.total+=phases.reduce((a,b)=>a+b.d,0);
-  if(stats.last!==today) stats.streak++;
-  stats.last=today;
- }
- localStorage.setItem("dwStats",JSON.stringify(stats));
- updateUI();
-}
-
+/* HARDCORE */
 document.addEventListener("visibilitychange",()=>{
- if(run && document.hidden){
-  alert("❌ Hardcore : session annulée");
-  finish(false);
- }
+ if(run && document.hidden){ alert("❌ Hardcore : session annulée"); finishSession(false); }
 });
 
 function updateUI(){
- totalHours.innerText=(stats.total/60).toFixed(1)+" h";
+ totalHours.innerText=(stats.totalMinutes/60).toFixed(1)+" h";
  streak.innerText=stats.streak;
+
  history.innerHTML="";
- stats.history.slice(-6).forEach(h=>{
-  const d=document.createElement("div");
-  d.className="card";
-  d.innerText=(h.ok?"✅":"❌")+" "+h.date;
-  history.appendChild(d);
- });
+ stats.history.slice(0,10).forEach(h=>{ history.innerHTML+=`<div>${h.date}. ${h.subject} ${h.ok?"✅":"🟥"}</div>`; });
+
  badges.innerHTML="";
  if(stats.streak>=7) badges.innerHTML+="<div class='badge'>🥉 Alpha</div>";
  if(stats.streak>=30) badges.innerHTML+="<div class='badge'>🥈 Monk</div>";
@@ -167,6 +202,5 @@ function updateUI(){
 }
 updateUI();
 </script>
-
 </body>
- </html>
+</html>
