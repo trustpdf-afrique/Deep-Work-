@@ -2,74 +2,35 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DEEP WORK ZAKARIA</title>
+
 <style>
 body{
-  margin:0;font-family:Arial,Helvetica,sans-serif;
-  background:#0f172a;color:#fff;
-  display:flex;justify-content:center;align-items:center;
-  min-height:100vh;touch-action: pan-x pan-y;overscroll-behavior: none;
+ margin:0;font-family:Arial,Helvetica,sans-serif;
+ background:#0f172a;color:#fff;
+ display:flex;justify-content:center;align-items:center;
+ min-height:100vh;
 }
 .app{
-  background:#020617;width:100%;max-width:460px;
-  border-radius:20px;padding:20px;
-  box-shadow:0 20px 50px rgba(0,0,0,.7)
+ background:#020617;width:100%;max-width:460px;
+ border-radius:20px;padding:20px;
+ box-shadow:0 20px 50px rgba(0,0,0,.7)
 }
-h1{text-align:center;color:#38bdf8;margin:0;font-size:24px}
-#motivation{text-align:center;font-size:14px;
-background:linear-gradient(90deg,#fbbf24,#38bdf8,#f43f5e);
--webkit-background-clip:text;-webkit-text-fill-color:transparent;
-font-weight:bold;margin-bottom:10px}
-
+h1{text-align:center;color:#38bdf8;margin:0}
 .timer{font-size:52px;text-align:center;color:#22c55e;font-weight:bold}
 .info{text-align:center;color:#38bdf8;font-size:13px;margin-bottom:6px}
-
 .phase{background:#111827;border-radius:14px;padding:12px;margin-bottom:10px}
-.phase h2{margin:0;color:#fbbf24;font-size:16px}
-.phase p{font-size:13px;color:#cbd5f5;margin-top:4px}
-.phase .desc-box{
-  padding:10px;margin-top:6px;border-radius:10px;font-size:13px;text-align:center;color:#fff;
+input,select,button{
+ width:100%;padding:8px;border-radius:8px;border:none;margin-top:6px;
+ font-weight:bold;
 }
-.desc-demarrage{background:#0ea5e9}
-.desc-focus{background:#22c55e}
-.desc-memoire{background:#8b5cf6}
-.desc-controle{background:#f97316}
-.desc-pause{background:#6b7280;color:#fff}
-
+button{background:#22c55e;color:#020617;cursor:pointer}
+button.locked{background:#4b5563;color:#9ca3af}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .card{background:#1e293b;border-radius:12px;padding:10px;text-align:center}
-
 .badge{background:#fbbf24;color:#020617;padding:6px;border-radius:8px;margin-top:5px}
-
-#hardcore{color:#ef4444;font-weight:bold;text-align:center;margin-top:10px}
-
-#dayBox{
-  text-align:center;font-size:16px;background:#1e293b;
-  padding:8px 12px;border-radius:12px;margin-bottom:12px;font-weight:bold;
-  transition:0.3s;
-}
-
-#history{max-height:120px;overflow:hidden;transition:0.3s;}
-#history.expanded{max-height:none;}
-#showMore{color:#38bdf8;cursor:pointer;text-align:center;margin-top:5px;font-size:13px;}
-
-/* ------------------ RÉCOMPENSES VISUELLES ------------------ */
-.reward{
-  position:fixed;
-  top:-40px;
-  font-size:28px;
-  animation:fall linear forwards;
-  pointer-events:none;
-  z-index:9999;
-}
-
-@keyframes fall{
-  to{
-    transform:translateY(110vh) rotate(360deg);
-    opacity:0;
-  }
-}
+#history{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 </style>
 </head>
 
@@ -77,401 +38,135 @@ font-weight:bold;margin-bottom:10px}
 <div class="app">
 
 <h1>🧠 DEEP WORK ZAKARIA</h1>
-<div id="motivation">Discipline aujourd’hui, victoire demain.</div>
-
-<div id="dayBox">📆 --</div>
 
 <div class="timer" id="timer">--:--</div>
 <div class="info" id="status">⏳ En attente</div>
 
+<!-- CONFIG -->
 <div class="phase">
-<h2 id="phaseTitle">En attente…</h2>
-<p class="desc-box desc-demarrage" id="phaseDesc">La description de la phase apparaîtra ici pour te guider.</p>
+ <h3>⏰ Heure</h3>
+ <input type="time" id="startTime">
+ <h3>📚 Matière</h3>
+ <select id="subject">
+  <option value="">Choisir</option>
+  <option>PC</option><option>HG</option><option>ANGLAIS</option>
+  <option>FRANÇAIS</option><option>MATHS</option><option>SVT</option>
+  <option>MUSIQUE</option><option>ESPAGNOL</option><option>EDHC</option>
+ </select>
+ <h3>⏱ Minutes</h3>
+ <input type="number" id="t1" value="5">
+ <input type="number" id="t2" value="40">
+ <input type="number" id="t3" value="20">
+ <input type="number" id="t4" value="10">
+ <input type="number" id="t5" value="15">
 </div>
 
+<!-- STATS -->
 <div class="grid">
-  <div class="card">
-    ⏱ Heures totales<br>
-    <b id="totalHours">0 h</b>
-  </div>
-  <div class="card">
-    🔥 Streak actuel<br>
-    <b id="streak">0 jours</b>
-  </div>
+ <div class="card">⏱ Total<br><b id="totalHours">0 h</b></div>
+ <div class="card">🔥 Streak<br><b id="streak">0</b></div>
 </div>
 
-<div class="phase">
-<h2>🏆 Badges</h2>
-<div id="badges"></div>
-</div>
+<div class="phase"><h3>🏆 Badges</h3><div id="badges"></div></div>
+<div class="phase"><h3>📊 Historique</h3><div id="history"></div></div>
 
-<div class="phase">
-<h2>📊 Historique</h2>
-<div id="history" class="grid"></div>
-<div id="showMore">Voir plus</div>
-</div>
-
-<div id="hardcore">🧠 MODE HARDCORE ACTIVÉ</div>
-
-<div class="phase">
-<h2>🛌 Gestion des congés / vacances</h2>
-<div style="display:flex;gap:10px;flex-wrap:wrap;">
-  <input type="date" id="vacationStart" style="flex:1;padding:6px;border-radius:6px;border:none;">
-  <input type="date" id="vacationEnd" style="flex:1;padding:6px;border-radius:6px;border:none;">
-</div>
-<div id="vacationStatus" style="text-align:center;color:#fbbf24;margin-top:6px;font-size:13px;"></div>
-</div>
+<!-- BOUTON ENREGISTRER -->
+<button id="saveBtn">🔒 ENREGISTRER</button>
 
 </div>
 
 <script>
-/* ------------------ CONFIG PHASES ------------------ */
-const phases=[
- {n:"Démarrage",d:5,title:"Démarrage",desc:"Libère ton esprit et mets-toi en mode concentration maximale. Prépare-toi à apprendre et à devenir exceptionnel.",class:"desc-demarrage"},
- {n:"Focus total",d:40,title:"Focus total",desc:"Rien ne peut te détourner. Sois pleinement immergé dans ta tâche. Chaque seconde compte.",class:"desc-focus"},
- {n:"Mémoire active",d:20,title:"Mémoire active",desc:"Exprime ce que tu as appris avec tes propres mots. Retient vraiment la connaissance et transforme-la en pouvoir.",class:"desc-memoire"},
- {n:"Pause",d:10,title:"Pause",desc:"Détends-toi un peu, respire et reprends des forces pour mieux continuer.",class:"desc-pause"},
- {n:"Contrôle",d:15,title:"Contrôle",desc:"Teste-toi, corrige tes erreurs et progresse. Renforce ta compréhension pour devenir plus fort à chaque étape.",class:"desc-controle"}
-];
-
-let i=0,time=0,run=false;
+let locked=false,run=false,i=0,time=0,phases=[];
 let stats=JSON.parse(localStorage.getItem("dwStats"))||{
- totalMinutes:0,streak:0,lastDay:null,history:{}
+ total:0,streak:0,last:null,history:[]
 };
 
-/* ------------------ UI ------------------ */
-function updateUI(){
- document.getElementById("totalHours").innerText=(stats.totalMinutes/60).toFixed(1)+" h";
- document.getElementById("streak").innerText=stats.streak+" jours";
- updateBadges();updateHistory();
- updateDayBox();
-}
-function updateDayBox(){
- const d=new Date();
- const dayNames=["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
- let displayDay = dayNames[d.getDay()];
- const dayBox = document.getElementById("dayBox");
- if(d.getDay()===6){ 
-     displayDay += " (Repos)";
-     dayBox.style.background="#4b5563";
- } else {
-     dayBox.style.background="#22c55e";
- }
- dayBox.innerText = "📆 " + displayDay;
+function lockAll(){
+ document.querySelectorAll("input,select").forEach(e=>e.disabled=true);
+ saveBtn.classList.add("locked");
+ saveBtn.disabled=true;
+ locked=true;
 }
 
-/* ------------------ PLUIE DE RÉCOMPENSE ------------------ */  
-function rewardRain(emoji){  
-  const duration = 5000;  
-  const interval = setInterval(()=>{  
-    const r = document.createElement("div");  
-    r.className = "reward";  
-    r.innerText = emoji;  
-    r.style.left = Math.random()*100 + "vw";  
-    r.style.animationDuration = (3 + Math.random()*2) + "s";  
-    document.body.appendChild(r);  
-    setTimeout(()=>r.remove(),5000);  
-  },200);  
-  setTimeout(()=>clearInterval(interval), duration);  
-}
+saveBtn.onclick=()=>{
+ if(!startTime.value||!subject.value){alert("⛔ Remplis tout");return;}
+ phases=[
+  {n:"Démarrage",d:+t1.value},
+  {n:"Focus",d:+t2.value},
+  {n:"Mémoire",d:+t3.value},
+  {n:"Pause",d:+t4.value},
+  {n:"Contrôle",d:+t5.value}
+ ];
+ lockAll();
+ status.innerText="🔒 Configuration enregistrée";
+};
 
-/* ------------------ BADGES ALPHA ------------------ */
-function updateBadges(){
- const b = document.getElementById("badges");
- const dayBox = document.getElementById("dayBox");
- b.innerHTML = "";
- let todayBadge = "";
-
- // 🥉 Alpha
- if(stats.streak >= 7){
-   const badgeAlpha = document.createElement("div");
-   badgeAlpha.className = "badge";
-   badgeAlpha.innerText = "🥉 Alpha";
-   b.appendChild(badgeAlpha);
-   todayBadge = "Alpha";
-
-   if(stats.streak === 7){
-     alert("🥉 Bravo ! Tu es maintenant Alpha !");
-     rewardRain("🔥");
-
-     let on=true;
-     const blink=setInterval(()=>{
-       badgeAlpha.style.background = on?"#fbbf24":"#1e293b";
-       on=!on;
-     },500);
-     setTimeout(()=>clearInterval(blink),5000);
-   }
- }
-
- // 🥈 Monk
- if(stats.streak >= 30){
-   const badgeMonk = document.createElement("div");
-   badgeMonk.className = "badge";
-   badgeMonk.innerText = "🥈 Monk";
-   b.appendChild(badgeMonk);
-   todayBadge = "Monk";
-
-   if(stats.streak === 30){
-     alert("🥈 Incroyable ! Tu es Monk !");
-     rewardRain("🧘‍♂️");
-
-     let on=true;
-     const blink=setInterval(()=>{
-       badgeMonk.style.background = on?"#fbbf24":"#1e293b";
-       on=!on;
-     },500);
-     setTimeout(()=>clearInterval(blink),5000);
-   }
- }
-
- // 🥇 Légende
- if(stats.streak >= 90){
-   const badgeLegend = document.createElement("div");
-   badgeLegend.className = "badge";
-   badgeLegend.innerText = "🥇 Légende";
-   b.appendChild(badgeLegend);
-   todayBadge = "Légende";
-
-   if(stats.streak === 90){
-     alert("🥇 TU ES UNE LÉGENDE !");
-     rewardRain("🏆");
-
-     let on=true;
-     const blink=setInterval(()=>{
-       badgeLegend.style.background = on?"#fbbf24":"#1e293b";
-       on=!on;
-     },500);
-     setTimeout(()=>clearInterval(blink),5000);
-   }
- }
-
- // ✨ Célébration du jour (5s)
- if(todayBadge){
-   dayBox.innerText = dayBox.innerText.split(" – ")[0] + " – " + todayBadge;
-
-   let on=true;
-   const blinkBox=setInterval(()=>{
-     dayBox.style.background = on?"#fbbf24":"#22c55e";
-     on=!on;
-   },500);
-
-   setTimeout(()=>{
-     clearInterval(blinkBox);
-     dayBox.style.background="#22c55e";
-   },5000);
- }
-}
-
-/* ------------------ HISTORIQUE ------------------ */
-function updateHistory(){
- const h=document.getElementById("history");h.innerHTML="";
- const dates = Object.keys(stats.history).sort((a,b)=>new Date(a)-new Date(b));
- dates.forEach(d=>{
-  const div=document.createElement("div");
-  div.className="card";
-  div.innerText=(stats.history[d]?"✅":"🟥")+" : "+d;
-  h.appendChild(div);
- });
-
- const showMore = document.getElementById("showMore");
- if(dates.length>6){
-   h.classList.remove("expanded");
-   showMore.style.display="block";
- } else showMore.style.display="none";
-
- showMore.onclick=()=>{
-   h.classList.toggle("expanded");
-   showMore.innerText = h.classList.contains("expanded")?"Voir moins":"Voir plus";
- };
-}
-
-/* ------------------ TIMER ------------------ */
 function startPhase(){
  const p=phases[i];
  time=p.d*60;
- const phaseDesc=document.getElementById("phaseDesc");
-
- if(p.n === "Pause"){
-     phaseDesc.innerHTML=`<b>⏸️ ${p.title}</b><br>${p.desc}`;
-     phaseDesc.className="desc-box desc-pause";
-     document.getElementById("timer").style.color="#94a3b8";
- } else {
-     phaseDesc.innerHTML=`<b>${p.title}</b><br>${p.desc}`;
-     phaseDesc.className="desc-box "+p.class;
-     document.getElementById("timer").style.color="#22c55e";
- }
-
- document.getElementById("phaseTitle").innerText=p.n;
- document.getElementById("status").innerText="▶️ En cours";
+ status.innerText="▶️ "+p.n+" ("+subject.value+")";
  run=true;
- updateTimerDisplay();
 }
 
-/* ------------------ PHASES + PLUIE PAR PHASE ------------------ */
-function nextPhase(){    
-  i++;    
-  if(i < phases.length){    
-      startPhase();    
-
-      // 💥 Emoji selon la phase précédente
-      let emoji = "✨";
-      const prevPhase = phases[i-1].n;
-      if(prevPhase === "Démarrage") emoji = "🚀";
-      else if(prevPhase === "Focus total") emoji = "🔥";
-      else if(prevPhase === "Mémoire active") emoji = "🧠";
-      else if(prevPhase === "Pause") emoji = "⏸️";
-      else if(prevPhase === "Contrôle") emoji = "🏆";
-
-      rewardRain(emoji);    
-  } else {
-      finishSession();    
-  }
-}
-
-/* ------------------ FIN DE SESSION + NOTE ------------------ */
-function finishSession(){
- run=false;
- const recap = prompt("Écris ce que tu as retenu :");
- const today = new Date();
- const todayStr = String(today.getDate()).padStart(2,"0")+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+today.getFullYear();
-
- if(recap){
-  stats.totalMinutes += 90;
-  if(stats.lastDay !== todayStr) stats.streak++;
-  stats.lastDay = todayStr;
-  stats.history[todayStr] = true;
-
-  // ------------------ NOTE AUTOMATIQUE ------------------
-  let score = 0;
-  const len = recap.trim().length;
-  if(len < 20) score = 0;
-  else if(len < 50) score = 5;
-  else if(len < 100) score = 7;
-  else score = 10;
-
-  alert(`✅ Session validée !\nTa note pour le récapitulatif : ${score}/10 🎉`);
-  rewardRain("🎉");  // Pluie finale générale
-
- } else {
-  stats.history[todayStr] = false;
-  alert("❌ Session annulée (tu n'as rien écrit)");
- }
-
- localStorage.setItem("dwStats", JSON.stringify(stats));
- updateUI();
-}
-
-/* ------------------ TIMER LOOP ------------------ */
 setInterval(()=>{
  if(run){
   if(time>0){
    time--;
-   updateTimerDisplay();
-  }else nextPhase();
+   timer.innerText=Math.floor(time/60)+":"+String(time%60).padStart(2,"0");
+  }else{
+   i++;
+   if(i<phases.length) startPhase();
+   else finish(true);
+  }
  }
 },1000);
 
-/* ------------------ AUTO START ------------------ */
 setInterval(()=>{
- const now = new Date();
- const h = now.getHours();
- const m = now.getMinutes();
- const s = now.getSeconds();
- const day = now.getDay();
- const isWeek = (day >=1 && day <=5) || day === 0;
-
- if(!run && isWeek && h===21 && m===0 && s===0){
-   i=0;
-   startPhase();
+ if(!locked||run) return;
+ const now=new Date();
+ const [h,m]=startTime.value.split(":").map(Number);
+ if(now.getHours()===h && now.getMinutes()===m && now.getSeconds()===0){
+  i=0;startPhase();
  }
 },1000);
 
-/* ------------------ HARDCORE ------------------ */
+function finish(success){
+ run=false;
+ const today=new Date().toLocaleDateString();
+ stats.history.push({date:today,ok:success});
+ if(success){
+  stats.total+=phases.reduce((a,b)=>a+b.d,0);
+  if(stats.last!==today) stats.streak++;
+  stats.last=today;
+ }
+ localStorage.setItem("dwStats",JSON.stringify(stats));
+ updateUI();
+}
+
 document.addEventListener("visibilitychange",()=>{
  if(run && document.hidden){
-  run=false;
-  alert("❌ Session annulée (Hardcore)");
+  alert("❌ Hardcore : session annulée");
+  finish(false);
  }
 });
 
-/* ------------------ VACANCES ------------------ */
-function checkVacation(){
- const now = new Date();
- const startInput = document.getElementById("vacationStart").value;
- const endInput = document.getElementById("vacationEnd").value;
- const statusBox = document.getElementById("vacationStatus");
-
- if(startInput && endInput){
-   const startDate = new Date(startInput);
-   const endDate = new Date(endInput);
-   if(now >= startDate && now <= endDate){
-     run=false;
-     document.getElementById("status").innerText = "⏸️ Congés activés, toutes les sessions sont suspendues.";
-     statusBox.innerText = "📌 Congés actifs du "+startInput+" au "+endInput;
-     return true;
-   } else {
-     statusBox.innerText = "";
-     return false;
-   }
- }
- statusBox.innerText = "";
- return false;
+function updateUI(){
+ totalHours.innerText=(stats.total/60).toFixed(1)+" h";
+ streak.innerText=stats.streak;
+ history.innerHTML="";
+ stats.history.slice(-6).forEach(h=>{
+  const d=document.createElement("div");
+  d.className="card";
+  d.innerText=(h.ok?"✅":"❌")+" "+h.date;
+  history.appendChild(d);
+ });
+ badges.innerHTML="";
+ if(stats.streak>=7) badges.innerHTML+="<div class='badge'>🥉 Alpha</div>";
+ if(stats.streak>=30) badges.innerHTML+="<div class='badge'>🥈 Monk</div>";
+ if(stats.streak>=90) badges.innerHTML+="<div class='badge'>🥇 Légende</div>";
 }
-
-document.getElementById("vacationStart").addEventListener("change",()=>{
- localStorage.setItem("vacationStart", document.getElementById("vacationStart").value);
- checkVacation();
-});
-document.getElementById("vacationEnd").addEventListener("change",()=>{
- localStorage.setItem("vacationEnd", document.getElementById("vacationEnd").value);
- checkVacation();
-});
-window.addEventListener("load",()=>{
- const start = localStorage.getItem("vacationStart");
- const end = localStorage.getItem("vacationEnd");
- if(start) document.getElementById("vacationStart").value = start;
- if(end) document.getElementById("vacationEnd").value = end;
- checkVacation();
-});
-
-/* ------------------ DAY BOX BLINK ------------------ */
-function blinkDayBox(){
- const dayBox = document.getElementById("dayBox");
- if(!dayBox) return;
- const now = new Date();
- const hour = now.getHours();
- const minute = now.getMinutes();
-
- if((hour===21 && minute===00) || (hour===22 && minute<15)){
-   if(!dayBox.classList.contains("blink")){
-     dayBox.classList.add("blink");
-     dayBox.style.transition="0.5s";
-     let on=true;
-     const interval = setInterval(()=>{
-       if(!dayBox.classList.contains("blink")){
-         dayBox.style.background="#22c55e";
-         clearInterval(interval);
-         return;
-       }
-       dayBox.style.background = on?"#fbbf24":"#22c55e";
-       on=!on;
-     },500);
-   }
- } else {
-   dayBox.classList.remove("blink");
-   dayBox.style.background="#22c55e";
- }
-}
-setInterval(blinkDayBox,1000);
-
-/* ------------------ TIMER DISPLAY ------------------ */
-function updateTimerDisplay(){
- const min=Math.floor(time/60);
- const sec=time%60;
- document.getElementById("timer").innerText=`${min}:${sec.toString().padStart(2,'0')}`;
-}
-
 updateUI();
 </script>
+
 </body>
 </html>
