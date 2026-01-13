@@ -273,7 +273,9 @@ document.addEventListener("visibilitychange",()=>{
 
 // ---------------- UI badges, total, streak ----------------
 function updateUI(){
- totalHours.innerText=(stats.totalMinutes/60).toFixed(1)+" h";
+ const hours = Math.floor(stats.totalMinutes / 60);
+const minutes = stats.totalMinutes % 60;
+totalHours.innerText = `${hours} h ${minutes} min`;
  streak.innerText=stats.streak;
  badges.innerHTML="";
  if(stats.streak>=7) badges.innerHTML+="<div class='badge'>🥉 Alpha</div>";
