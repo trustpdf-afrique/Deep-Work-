@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>DEEP WORK ZAKARIA</title>
+
 <style>
 body{
  margin:0;font-family:Arial,Helvetica,sans-serif;
@@ -17,22 +18,18 @@ body{
  box-shadow:0 20px 50px rgba(0,0,0,.7)
 }
 h1{text-align:center;color:#38bdf8;margin-bottom:10px}
-.timer{font-size:52px;text-align:center;font-weight:bold; display:flex; justify-content:center; align-items:center; gap:8px;}
+.timer{font-size:52px;text-align:center;font-weight:bold;display:flex;justify-content:center;align-items:center;gap:8px}
 .info{text-align:center;color:#38bdf8;font-size:13px;margin-bottom:8px}
 .phase{background:#111827;border-radius:14px;padding:12px;margin-bottom:10px}
 input,select,button{
- width:100%;padding:8px;border-radius:8px;border:none;margin-top:6px;
- font-weight:bold;
+ width:100%;padding:8px;border-radius:8px;border:none;margin-top:6px;font-weight:bold
 }
 button{background:#22c55e;color:#020617}
 button.locked{background:#4b5563;color:#9ca3af}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .card{background:#1e293b;border-radius:12px;padding:10px;text-align:center}
 .badge{background:#fbbf24;color:#020617;padding:6px;border-radius:8px;margin-top:5px}
-.desc-box{
- margin-top:6px;padding:10px;border-radius:10px;
- text-align:center;font-size:13px
-}
+.desc-box{margin-top:6px;padding:10px;border-radius:10px;text-align:center;font-size:13px}
 .desc-demarrage{background:#0ea5e9}
 .desc-focus{background:#22c55e}
 .desc-memoire{background:#8b5cf6}
@@ -41,13 +38,16 @@ button.locked{background:#4b5563;color:#9ca3af}
 #history div{font-size:13px;text-align:left}
 </style>
 </head>
+
 <body>
 <div class="app">
 
 <h1>🧠 DEEP WORK ZAKARIA</h1>
-<div id="motivation">Discipline aujourd’hui, victoire demain.</div>
 
-<div class="timer" id="timer"><span id="timerEmoji">⏳</span> <span id="timerTime">--:--</span></div>
+<div class="timer">
+ <span id="timerEmoji">⏳</span>
+ <span id="timerTime">--:--</span>
+</div>
 <div class="info" id="status">⏳ Attente</div>
 
 <div class="phase">
@@ -62,18 +62,9 @@ button.locked{background:#4b5563;color:#9ca3af}
   <option>MUSIQUE</option><option>ESPAGNOL</option><option>EDHC</option>
  </select>
 
- <!-- NOUVEAU : total durée matière -->
- <div id="totalDuration" class="desc-box desc-demarrage">
-  Durée totale : -- min
- </div>
-
- <div id="currentPhase" class="desc-box desc-demarrage">
-  Phase actuelle : --:--
- </div>
-
- <div id="descBox" class="desc-box desc-demarrage">
-  La description de la session apparaîtra ici.
- </div>
+ <div id="totalDuration" class="desc-box desc-demarrage">Durée totale : -- min</div>
+ <div id="currentPhase" class="desc-box desc-demarrage">Phase actuelle : --</div>
+ <div id="descBox" class="desc-box desc-demarrage">La description de la session apparaîtra ici.</div>
 </div>
 
 <div class="grid">
@@ -90,135 +81,101 @@ button.locked{background:#4b5563;color:#9ca3af}
 
 <script>
 const phaseModels=[
- {n:"Démarrage",desc:"Libère ton esprit et mets-toi en mode concentration maximale. Prépare-toi à apprendre et à devenir exceptionnel.",class:"desc-demarrage",emoji:"🚀"},
- {n:"Focus total",desc:"Rien ne peut te détourner. Sois pleinement immergé dans ta tâche. Chaque seconde compte.",class:"desc-focus",emoji:"🔥"},
- {n:"Mémoire active",desc:"Exprime ce que tu as appris avec tes propres mots. Retient vraiment la connaissance et transforme-la en pouvoir.",class:"desc-memoire",emoji:"🧠"},
- {n:"Pause",desc:"Détends-toi un peu, respire et reprends des forces pour mieux continuer.",class:"desc-pause",emoji:"☕"},
- {n:"Contrôle",desc:"Teste-toi, corrige tes erreurs et progresse. Renforce ta compréhension pour devenir plus fort à chaque étape.",class:"desc-controle",emoji:"✅"}
+ {n:"Démarrage",d:5,desc:"Prépare ton esprit.",class:"desc-demarrage",emoji:"🚀"},
+ {n:"Focus total",d:30,desc:"Concentration absolue.",class:"desc-focus",emoji:"🔥"},
+ {n:"Mémoire active",d:20,desc:"Ancre le savoir.",class:"desc-memoire",emoji:"🧠"},
+ {n:"Pause",d:5,desc:"Recharge ton énergie.",class:"desc-pause",emoji:"☕"},
+ {n:"Contrôle",d:10,desc:"Teste-toi.",class:"desc-controle",emoji:"✅"}
 ];
 
-const durationsBySubject = {
- "PC":[5,30,20,5,10],
- "HG":[5,25,20,5,10],
- "ANGLAIS":[5,20,20,5,10],
- "FRANÇAIS":[5,40,20,10,15],
- "MATHS":[5,30,25,5,10],
- "SVT":[5,25,20,5,10],
- "MUSIQUE":[5,20,15,5,10],
- "ESPAGNOL":[5,20,20,5,10],
- "EDHC":[5,20,15,5,10]
-};
-
 let phases=[],i=0,time=0,run=false,locked=false;
-let sessionMinutes=0;
+let sessionMinutes=0,sessionClosed=false;
 
 let stats=JSON.parse(localStorage.getItem("dwStats"))||{
  totalMinutes:0,streak:0,lastSuccess:null,history:[]
 };
 
-function todayStr(){ return new Date().toLocaleDateString("fr-FR"); }
+function todayStr(){return new Date().toLocaleDateString("fr-FR");}
 
-function lockAll(){
- document.querySelectorAll("input,select").forEach(e=>e.disabled=true);
- saveBtn.disabled=true; saveBtn.classList.add("locked");
- locked=true;
-}
-
-// Sélection matière = définit phases + durée + durée totale affichée
-subject.addEventListener("change", ()=>{
- const val = subject.value;
- if(durationsBySubject[val]){
-   phases = phaseModels.map((p,idx)=>({...p,d:durationsBySubject[val][idx]}));
-   sessionMinutes = durationsBySubject[val].reduce((a,b)=>a+b,0);
-   totalDuration.innerText = `Durée totale : ${sessionMinutes} min`;
- }
-});
-
-// ENREGISTRER
-saveBtn.onclick=()=>{
- if(!startTime.value||!subject.value){alert("⛔ Remplis tout"); return;}
- lockAll();
- status.innerText="⏳ Attente";
+subject.onchange=()=>{
+ phases=phaseModels;
+ sessionMinutes=phases.reduce((a,b)=>a+b.d,0);
+ totalDuration.innerText=`Durée totale : ${sessionMinutes} min`;
 };
 
-// START PHASE
+saveBtn.onclick=()=>{
+ if(!startTime.value||!subject.value){alert("⛔ Remplis tout");return;}
+ document.querySelectorAll("input,select").forEach(e=>e.disabled=true);
+ saveBtn.classList.add("locked");
+ locked=true;
+};
+
 function startPhase(){
+ sessionClosed=false;
  const p=phases[i];
  time=p.d*60;
- status.innerText="▶️ En cours";
  descBox.className="desc-box "+p.class;
  descBox.innerText=p.desc;
  timerEmoji.innerText=p.emoji;
+ status.innerText="▶️ En cours";
  run=true;
 }
 
-// FIN DE SESSION
 function finishSession(success){
+ if(sessionClosed)return;
+ sessionClosed=true;
  run=false;
- status.innerText="✅ Terminé";
+ status.innerText=success?"✅ Terminé":"❌ Session annulée";
 
  stats.history.unshift({date:todayStr(),subject:subject.value,ok:success});
  if(success){
   stats.totalMinutes+=sessionMinutes;
-  if(stats.lastSuccess!==todayStr()){ stats.streak++; stats.lastSuccess=todayStr();}
+  if(stats.lastSuccess!==todayStr()){stats.streak++;stats.lastSuccess=todayStr();}
  }
  localStorage.setItem("dwStats",JSON.stringify(stats));
  updateUI();
-
- setTimeout(()=>{
-   status.innerText="⏳ Attente";
-   currentPhase.innerText="Phase actuelle : --:--";
-   timerEmoji.innerText="⏳";
-   i=0; 
- },120000);
 }
 
-// TIMER DISPLAY
-function updateTimerDisplay(){
- const min=Math.floor(time/60);
- const sec=time%60;
- timerTime.innerText=`${min}:${sec.toString().padStart(2,'0')}`;
- if(phases[i]) currentPhase.innerText = `Phase actuelle : ${phases[i].n} ⏱ ${min}:${sec.toString().padStart(2,'0')}`;
+function updateTimer(){
+ const m=Math.floor(time/60),s=time%60;
+ timerTime.innerText=`${m}:${s.toString().padStart(2,"0")}`;
+ if(phases[i])currentPhase.innerText=`${phases[i].n} ⏱ ${m}:${s.toString().padStart(2,"0")}`;
 }
 
-// INTERVALLE TIMER
 setInterval(()=>{
  if(run){
-  if(time>0){ time--; updateTimerDisplay(); }
-  else{ i++; if(i<phases.length) startPhase(); else finishSession(true); }
+  if(time>0){time--;updateTimer();}
+  else{i++;i<phases.length?startPhase():finishSession(true);}
  }
 },1000);
 
-// CHECK HEURE DE DÉBUT
 setInterval(()=>{
- if(!locked||run) return;
- const now=new Date();
+ if(!locked||run)return;
  const [h,m]=startTime.value.split(":").map(Number);
- if(now.getHours()===h && now.getMinutes()===m && now.getSeconds()===0){
-   i=0;
-   startPhase();
+ const n=new Date();
+ if(n.getHours()===h&&n.getMinutes()===m&&n.getSeconds()===0){
+  i=0;startPhase();
  }
 },1000);
 
-// HARDCORE
 document.addEventListener("visibilitychange",()=>{
- if(run && document.hidden){ alert("❌ Hardcore : session annulée"); finishSession(false); }
+ if(run&&document.hidden)finishSession(false);
+});
+window.addEventListener("pagehide",()=>{
+ if(run)finishSession(false);
 });
 
-// UPDATE UI
 function updateUI(){
  totalHours.innerText=(stats.totalMinutes/60).toFixed(1)+" h";
  streak.innerText=stats.streak;
-
  history.innerHTML="";
  stats.history.forEach(h=>{
-   history.innerHTML+=`<div>${h.date}. ${h.subject} ${h.ok?"✅":"🟥"}</div>`;
+  history.innerHTML+=`<div>${h.date}. ${h.subject} ${h.ok?"✅":"🟥"}</div>`;
  });
-
  badges.innerHTML="";
- if(stats.streak>=7) badges.innerHTML+="<div class='badge'>🥉 Alpha</div>";
- if(stats.streak>=30) badges.innerHTML+="<div class='badge'>🥈 Monk</div>";
- if(stats.streak>=90) badges.innerHTML+="<div class='badge'>🥇 Légende</div>";
+ if(stats.streak>=7)badges.innerHTML+="<div class='badge'>🥉 Alpha</div>";
+ if(stats.streak>=30)badges.innerHTML+="<div class='badge'>🥈 Monk</div>";
+ if(stats.streak>=90)badges.innerHTML+="<div class='badge'>🥇 Légende</div>";
 }
 updateUI();
 </script>
