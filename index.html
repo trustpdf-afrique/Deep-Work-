@@ -54,7 +54,6 @@ button.locked{background:#4b5563;color:#9ca3af;}
 .desc-memoire{background:#8b5cf6}
 .desc-pause{background:#6b7280}
 .desc-controle{background:#f97316}
-
 /* ---------------- FEUX D'ARTIFICE ---------------- */
 .reward{
   position:fixed;
@@ -70,6 +69,22 @@ button.locked{background:#4b5563;color:#9ca3af;}
     opacity:0;
   }
 }
+/* ---------------- TEXTE BRILLANT ---------------- */
+#timerText{
+  font-weight:bold;
+  text-align:center;
+  font-size:16px;
+  margin-top:8px;
+  background:linear-gradient(90deg,#fbbf24,#38bdf8,#f43f5e);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  animation:shine 2s infinite alternate;
+}
+@keyframes shine{
+ 0%{text-shadow:0 0 5px #fbbf24,0 0 10px #38bdf8;}
+ 50%{text-shadow:0 0 15px #f43f5e,0 0 25px #38bdf8;}
+ 100%{text-shadow:0 0 20px #fbbf24,0 0 30px #38bdf8;}
+}
 </style>
 </head>
 <body>
@@ -81,6 +96,8 @@ button.locked{background:#4b5563;color:#9ca3af;}
  <span id="timerEmoji">⏳</span>
  <span id="timerTime">--:--</span>
 </div>
+
+<div id="timerText" class="desc-box desc-focus">🚀 Démarrage imminent… Reste concentré !</div>
 
 <div class="info" id="status">⏳ Attente</div>
 
@@ -144,10 +161,11 @@ const durations={
  SVT:[5,25,20,5,10],
  MUSIQUE:[5,20,15,5,10],
  ESPAGNOL:[5,20,20,5,10],
- EDHC:[1,1,1,1,1]
+ EDHC:[5,20,15,5,10]
 };
 
 let phases=[],i=0,time=0,run=false,locked=false;
+let hardcoreTimeout;
 
 let stats=JSON.parse(localStorage.getItem("dwStats"))||{
  totalMinutes:0,
@@ -168,6 +186,7 @@ const currentPhase=document.getElementById("currentPhase");
 const badges=document.getElementById("badges");
 const totalHours=document.getElementById("totalHours");
 const streak=document.getElementById("streak");
+const timerText=document.getElementById("timerText");
 
 // ---------------- Choix matière ----------------
 subject.onchange=()=>{
@@ -221,6 +240,7 @@ function startPhase(){
  descBox.innerText=p.desc;
  currentPhase.className="desc-box "+p.class;
  currentPhase.innerText="Phase actuelle : "+p.n;
+ timerText.innerText=`${p.emoji} ${p.n} en cours… Reste concentré !`;
  setStatus("▶️ En cours");
  run=true;
  rewardRain(p.emoji);
@@ -236,7 +256,7 @@ function finishSession(){
  stats.lastDay=today;
  localStorage.setItem("dwStats",JSON.stringify(stats));
  updateUI();
- setTimeout(()=>{setStatus("⏳ Attente");i=0;run=false;},60000);
+ setTimeout(()=>{setStatus("⏳ Attente");i=0;run=false;timerText.innerText="⏳ Prochaine session…";},60000);
 }
 
 // ---------------- TIMER ----------------
@@ -263,12 +283,18 @@ setInterval(()=>{
  }
 },1000);
 
-// ---------------- HARDCORE ----------------
+// ---------------- HARDCORE CORRIGÉ ----------------
 document.addEventListener("visibilitychange",()=>{
- if(run && document.hidden){
-  alert("❌ Session annulée (Hardcore)");
-  location.reload();
- }
+  if(run){
+    if(document.hidden){
+      hardcoreTimeout = setTimeout(()=>{
+        alert("❌ Session annulée (Hardcore)");
+        location.reload();
+      },3000); // 3 secondes
+    } else {
+      clearTimeout(hardcoreTimeout);
+    }
+  }
 });
 
 // ---------------- UI badges, total, streak ----------------
