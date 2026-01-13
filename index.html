@@ -4,132 +4,80 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>DEEP WORK ZAKARIA</title>
-
 <style>
 body{
- margin:0;
- font-family:Arial,Helvetica,sans-serif;
- background:#0f172a;
- color:#fff;
- display:flex;
- justify-content:center;
- align-items:center;
+ margin:0;font-family:Arial,Helvetica,sans-serif;
+ background:#0f172a;color:#fff;
+ display:flex;justify-content:center;align-items:center;
  min-height:100vh;
 }
-
 .app{
- background:#020617;
- width:100%;
- max-width:460px;
- border-radius:20px;
- padding:20px;
+ background:#020617;width:100%;max-width:460px;
+ border-radius:20px;padding:20px;
  box-shadow:0 20px 50px rgba(0,0,0,.7);
 }
-
-h1{
- text-align:center;
- color:#38bdf8;
- margin-bottom:4px;
-}
-
+h1{text-align:center;color:#38bdf8;margin-bottom:4px;}
 #motivation{
- text-align:center;
- font-size:14px;
- font-weight:bold;
- margin-bottom:12px;
+ text-align:center;font-size:14px;font-weight:bold;margin-bottom:12px;
  background:linear-gradient(90deg,#fbbf24,#38bdf8,#f43f5e);
- -webkit-background-clip:text;
- -webkit-text-fill-color:transparent;
+ -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+ animation: glow 2s infinite alternate;
 }
-
+@keyframes glow{
+ 0%{text-shadow:0 0 5px #fbbf24,0 0 10px #38bdf8;}
+ 50%{text-shadow:0 0 15px #f43f5e,0 0 25px #38bdf8;}
+ 100%{text-shadow:0 0 20px #fbbf24,0 0 30px #38bdf8;}
+}
 .timer{
- font-size:52px;
- font-weight:bold;
- display:flex;
- justify-content:center;
- align-items:center;
- gap:10px;
- margin-bottom:5px;
+ font-size:60px;font-weight:bold;display:flex;justify-content:center;align-items:center;gap:15px;margin-bottom:10px;
+ padding:12px 20px;border:3px solid #38bdf8;border-radius:20px;
+ box-shadow:0 0 20px rgba(56,189,248,0.7),0 0 40px rgba(56,189,248,0.5);
+ background:linear-gradient(135deg,#0f172a,#1e293b);
+ transition:all 0.5s ease;text-shadow:0 0 10px rgba(255,255,255,0.5);
 }
-
-.info{
- text-align:center;
- color:#38bdf8;
- font-size:13px;
- margin-bottom:10px;
-}
-
-.phase{
- background:#111827;
- border-radius:14px;
- padding:12px;
- margin-bottom:10px;
-}
-
+.timer.attente{border-color:#94a3b8;box-shadow:0 0 15px rgba(148,163,184,0.5);color:#94a3b8;}
+.timer.cours{border-color:#22c55e;box-shadow:0 0 20px rgba(34,197,94,0.7);color:#22c55e;}
+.timer.termine{border-color:#fbbf24;box-shadow:0 0 25px rgba(251,191,36,0.8);color:#fbbf24;}
+.info{text-align:center;color:#38bdf8;font-size:13px;margin-bottom:10px;}
+.phase{background:#111827;border-radius:14px;padding:12px;margin-bottom:10px;}
 input,select,button{
- width:100%;
- padding:8px;
- border-radius:8px;
- border:none;
- margin-top:6px;
- font-weight:bold;
+ width:100%;padding:8px;border-radius:8px;border:none;margin-top:6px;font-weight:bold;
 }
-
-button{
- background:#22c55e;
- color:#020617;
- cursor:pointer;
-}
-
-button.locked{
- background:#4b5563;
- color:#9ca3af;
-}
-
-.grid{
- display:grid;
- grid-template-columns:1fr 1fr;
- gap:10px;
-}
-
-.card{
- background:#1e293b;
- border-radius:12px;
- padding:10px;
- text-align:center;
-}
-
-.badge{
- background:#fbbf24;
- color:#020617;
- padding:6px;
- border-radius:8px;
- margin-top:5px;
-}
-
-.desc-box{
- margin-top:6px;
- padding:10px;
- border-radius:10px;
- text-align:center;
- font-size:13px;
-}
-
+button{background:#22c55e;color:#020617;cursor:pointer;}
+button.locked{background:#4b5563;color:#9ca3af;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.card{background:#1e293b;border-radius:12px;padding:10px;text-align:center;}
+.badge{background:#fbbf24;color:#020617;padding:6px;border-radius:8px;margin-top:5px;}
+.desc-box{margin-top:6px;padding:10px;border-radius:10px;text-align:center;font-size:13px;}
 .desc-demarrage{background:#0ea5e9}
 .desc-focus{background:#22c55e}
 .desc-memoire{background:#8b5cf6}
 .desc-pause{background:#6b7280}
 .desc-controle{background:#f97316}
+
+/* ---------------- FEUX D'ARTIFICE ---------------- */
+.reward{
+  position:fixed;
+  top:-40px;
+  font-size:28px;
+  animation:fall linear forwards;
+  pointer-events:none;
+  z-index:9999;
+}
+@keyframes fall{
+  to{
+    transform:translateY(110vh) rotate(360deg);
+    opacity:0;
+  }
+}
 </style>
 </head>
-
 <body>
 <div class="app">
-
 <h1>🧠 DEEP WORK ZAKARIA</h1>
 <div id="motivation">Discipline aujourd’hui, victoire demain.</div>
 
-<div class="timer">
+<div class="timer" id="timer">
  <span id="timerEmoji">⏳</span>
  <span id="timerTime">--:--</span>
 </div>
@@ -143,15 +91,9 @@ button.locked{
  <h3>📚 Matière</h3>
  <select id="subject">
   <option value="">Choisir</option>
-  <option>PC</option>
-  <option>HG</option>
-  <option>ANGLAIS</option>
-  <option>FRANÇAIS</option>
-  <option>MATHS</option>
-  <option>SVT</option>
-  <option>MUSIQUE</option>
-  <option>ESPAGNOL</option>
-  <option>EDHC</option>
+  <option>PC</option><option>HG</option><option>ANGLAIS</option>
+  <option>FRANÇAIS</option><option>MATHS</option><option>SVT</option>
+  <option>MUSIQUE</option><option>ESPAGNOL</option><option>EDHC</option>
  </select>
 
  <div id="currentPhase" class="desc-box desc-demarrage">
@@ -184,6 +126,7 @@ button.locked{
 </div>
 
 <script>
+// ---------------- CONFIGURATION DES PHASES ----------------
 const phaseModels=[
  {n:"Démarrage",desc:"Libère ton esprit et mets-toi en mode concentration maximale.",class:"desc-demarrage",emoji:"🚀"},
  {n:"Focus total",desc:"Rien ne peut te détourner. Chaque seconde compte.",class:"desc-focus",emoji:"🔥"},
@@ -201,7 +144,7 @@ const durations={
  SVT:[5,25,20,5,10],
  MUSIQUE:[5,20,15,5,10],
  ESPAGNOL:[5,20,20,5,10],
- EDHC:[5,20,15,5,10]
+ EDHC:[1,1,1,1,1]
 };
 
 let phases=[],i=0,time=0,run=false,locked=false;
@@ -212,24 +155,64 @@ let stats=JSON.parse(localStorage.getItem("dwStats"))||{
  lastDay:null
 };
 
+// ---------------- UI ----------------
+const timer=document.getElementById("timer");
+const status=document.getElementById("status");
+const startTime=document.getElementById("startTime");
+const subject=document.getElementById("subject");
+const saveBtn=document.getElementById("saveBtn");
+const timerTime=document.getElementById("timerTime");
+const timerEmoji=document.getElementById("timerEmoji");
+const descBox=document.getElementById("descBox");
+const currentPhase=document.getElementById("currentPhase");
+const badges=document.getElementById("badges");
+const totalHours=document.getElementById("totalHours");
+const streak=document.getElementById("streak");
+
+// ---------------- Choix matière ----------------
 subject.onchange=()=>{
  const d=durations[subject.value];
  if(!d) return;
  phases=phaseModels.map((p,idx)=>({...p,d:d[idx]}));
 };
 
+// ---------------- ENREGISTRER ----------------
 saveBtn.onclick=()=>{
  if(!startTime.value || !subject.value){
   alert("⛔ Choisis l’heure et la matière");
   return;
  }
  document.querySelectorAll("input,select").forEach(e=>e.disabled=true);
- saveBtn.disabled=true;
- saveBtn.classList.add("locked");
+ saveBtn.disabled=true; saveBtn.classList.add("locked");
  locked=true;
- status.innerText="⏳ Attente";
+ setStatus("⏳ Attente");
 };
 
+// ---------------- GESTION STATUS ----------------
+function setStatus(state){
+ status.innerText=state;
+ timer.classList.remove("attente","cours","termine");
+ if(state.includes("Attente")) timer.classList.add("attente");
+ else if(state.includes("En cours")) timer.classList.add("cours");
+ else if(state.includes("Terminé")) timer.classList.add("termine");
+}
+
+// ---------------- FEUX D'ARTIFICE ----------------
+function rewardRain(emoji){
+  const duration = 3000;
+  const interval = setInterval(()=>{
+    const r = document.createElement("div");
+    r.className="reward";
+    r.innerText=emoji;
+    r.style.left=Math.random()*100 + "vw";
+    r.style.animationDuration=(2+Math.random()*2) + "s";
+    document.body.appendChild(r);
+    setTimeout(()=>r.remove(),3000);
+  },200);
+  setTimeout(()=>clearInterval(interval),duration);
+}
+
+// ---------------- START PHASE ----------------
 function startPhase(){
  const p=phases[i];
  time=p.d*60;
@@ -238,23 +221,25 @@ function startPhase(){
  descBox.innerText=p.desc;
  currentPhase.className="desc-box "+p.class;
  currentPhase.innerText="Phase actuelle : "+p.n;
- status.innerText="▶️ En cours";
+ setStatus("▶️ En cours");
  run=true;
+ rewardRain(p.emoji);
 }
 
+// ---------------- FIN SESSION ----------------
 function finishSession(){
  run=false;
- status.innerText="✅ Terminé";
-
- stats.totalMinutes+=phases.reduce((a,b)=>a+b.d,0);
+ setStatus("✅ Terminé");
+ stats.totalMinutes += phases.reduce((a,b)=>a+b.d,0);
  const today=new Date().toDateString();
  if(stats.lastDay!==today) stats.streak++;
  stats.lastDay=today;
-
  localStorage.setItem("dwStats",JSON.stringify(stats));
  updateUI();
+ setTimeout(()=>{setStatus("⏳ Attente");i=0;run=false;},60000);
 }
 
+// ---------------- TIMER ----------------
 function updateTimer(){
  const m=Math.floor(time/60);
  const s=time%60;
@@ -264,23 +249,21 @@ function updateTimer(){
 setInterval(()=>{
  if(run){
   if(time>0){time--;updateTimer();}
-  else{
-   i++;
-   i<phases.length ? startPhase() : finishSession();
-  }
+  else{i++;i<phases.length?startPhase():finishSession();}
  }
 },1000);
 
+// ---------------- LANCER À L'HEURE ----------------
 setInterval(()=>{
  if(!locked || run) return;
  const [h,m]=startTime.value.split(":").map(Number);
  const now=new Date();
  if(now.getHours()==h && now.getMinutes()==m && now.getSeconds()==0){
-  i=0;
-  startPhase();
+  i=0;startPhase();
  }
 },1000);
 
+// ---------------- HARDCORE ----------------
 document.addEventListener("visibilitychange",()=>{
  if(run && document.hidden){
   alert("❌ Session annulée (Hardcore)");
@@ -288,6 +271,7 @@ document.addEventListener("visibilitychange",()=>{
  }
 });
 
+// ---------------- UI badges, total, streak ----------------
 function updateUI(){
  totalHours.innerText=(stats.totalMinutes/60).toFixed(1)+" h";
  streak.innerText=stats.streak;
@@ -299,6 +283,5 @@ function updateUI(){
 
 updateUI();
 </script>
-
 </body>
 </html>
