@@ -188,26 +188,24 @@ const timerText=document.getElementById("timerText");
 const tiredCheck=document.getElementById("tiredCheck");
 const progressBar=document.getElementById("progressBar");
 
-// ---------------- NOTIFICATION DEEP WORK ----------------
-if ("Notification" in window && Notification.permission === "default") {
+// ---------------- NOTIFICATION ----------------
+if("Notification" in window && Notification.permission==="default"){
  Notification.requestPermission();
 }
-
-function showDeepWorkNotification(subject,time){
+function showDeepWorkNotification(subj,time){
  if(Notification.permission!=="granted") return;
  const n=new Notification("🧠 Deep Work – Zakaria",{
-  body:`Zakaria, l’heure que vous avez promis à votre Deep Work est arrivée.\nMatière : ${subject} – ${time}`,
+  body:`Zakaria, l’heure que vous avez promis à votre Deep Work est arrivée.\nMatière : ${subj} – ${time}`,
   silent:true
  });
  setTimeout(()=>n.close(),600000);
 }
 let notifSent=false;
-
 setInterval(()=>{
- if(!locked || notifSent) return;
+ if(!locked) return;
  const timeInput=startTime.value;
- const subjectValue=subject.value;
- if(!timeInput||!subjectValue) return;
+ const subj=subject.value;
+ if(!timeInput||!subj||notifSent) return;
 
  const [h,m]=timeInput.split(":").map(Number);
  const now=new Date();
@@ -215,8 +213,8 @@ setInterval(()=>{
  target.setHours(h,m,0,0);
 
  const diff=(target-now)/60000;
- if(diff<=5 && diff>4){
-  showDeepWorkNotification(subjectValue,timeInput);
+ if(diff<=5 && diff>0 && !notifSent){
+  showDeepWorkNotification(subj,timeInput);
   notifSent=true;
  }
  if(diff<-10) notifSent=false;
@@ -250,97 +248,6 @@ function setStatus(state){
  else if(state.includes("Terminé")) timer.classList.add("termine");
 }
 
-// ---------------- FEUX D'ARTIFICE ----------------
-function rewardRain(emoji){
-  const duration = 3000;
-  const interval = setInterval(()=>{
-    const r = document.createElement("div");
-    r.className="reward";
-    r.innerText=emoji;
-    r.style.left=Math.random()*100 + "vw";
-    r.style.animationDuration=(2+Math.random()*2) + "s";
-    document.body.appendChild(r);
-    setTimeout(()=>r.remove(),3000);
-  },200);
-  setTimeout(()=>clearInterval(interval),duration);
-}
-
-// ---------------- START PHASE ----------------
-function startPhase(){
- const p=phases[i];
- if(tiredCheck.checked){
-   time=10*60;
-   phases=[{...p,d:10}];
- } else time=p.d*60;
- sessionTotalTime=time;
- timerEmoji.innerText=p.emoji;
- descBox.className="desc-box "+p.class;
- descBox.innerText=p.desc;
- currentPhase.className="desc-box "+p.class;
- currentPhase.innerText="Phase actuelle : "+p.n;
- timerText.innerText=`${p.emoji} ${p.n} en cours… Reste concentré !`;
- setStatus("▶️ En cours");
- run=true;
- rewardRain(p.emoji);
- progressBar.style.width="0%";
- const colors={"Démarrage":"#0ea5e9","Focus total":"#22c55e","Mémoire active":"#8b5cf6","Pause":"#6b7280","Contrôle":"#f97316"};
- progressBar.style.background=colors[p.n]||"#22c55e";
-}
-
-// ---------------- FIN SESSION ----------------
-function finishSession(){
- run=false;
- setStatus("✅ Terminé");
- const total=phases.reduce((a,b)=>a+b.d,0);
- stats.totalMinutes += total;
- const today=new Date().toDateString();
- if(stats.lastDay!==today) stats.streak++;
- stats.lastDay=today;
- localStorage.setItem("dwStats",JSON.stringify(stats));
- updateUI();
- setTimeout(()=>{setStatus("⏳ Attente");i=0;run=false;timerText.innerText="⏳ Prochaine session…";progressBar.style.width="0%";},60000);
-}
-
-// ---------------- TIMER ----------------
-function updateTimer(){
- const m=Math.floor(time/60);
- const s=time%60;
- timerTime.innerText=`${m}:${s.toString().padStart(2,"0")}`;
-}
-
-setInterval(()=>{
- if(run){
-  if(time>0){
-   time--;
-   updateTimer();
-   const progressPercent = ((sessionTotalTime - time)/sessionTotalTime)*100;
-   progressBar.style.width = progressPercent+"%";
-  } else {i++;i<phases.length?startPhase():finishSession();}
- }
-},1000);
-
-// ---------------- LANCER À L'HEURE ----------------
-setInterval(()=>{
- if(!locked || run) return;
- const [h,m]=startTime.value.split(":").map(Number);
- const now=new Date();
- if(now.getHours()==h && now.getMinutes()==m && now.getSeconds()==0){
-  i=0;startPhase();
- }
-},1000);
-
-// ---------------- HARDCORE ----------------
-document.addEventListener("visibilitychange",()=>{
-  if(run){
-    if(document.hidden){
-      hardcoreTimeout = setTimeout(()=>{
-        alert("❌ Session annulée (Hardcore)");
-        location.reload();
-      },3000);
-    } else { clearTimeout(hardcoreTimeout); }
-  }
-});
-
 // ---------------- UI badges, total, streak ----------------
 function updateUI(){
  const hours = Math.floor(stats.totalMinutes / 60);
@@ -352,7 +259,6 @@ function updateUI(){
  if(stats.streak>=30) badges.innerHTML+="<div class='badge'>🥈 Monk</div>";
  if(stats.streak>=90) badges.innerHTML+="<div class='badge'>🥇 Légende</div>";
 }
-
 updateUI();
 </script>
 </body>
