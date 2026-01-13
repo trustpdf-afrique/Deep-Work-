@@ -54,38 +54,17 @@ button.locked{background:#4b5563;color:#9ca3af;}
 .desc-memoire{background:#8b5cf6}
 .desc-pause{background:#6b7280}
 .desc-controle{background:#f97316}
-/* ---------------- FEUX D'ARTIFICE ---------------- */
-.reward{
-  position:fixed;
-  top:-40px;
-  font-size:28px;
-  animation:fall linear forwards;
-  pointer-events:none;
-  z-index:9999;
-}
-@keyframes fall{
-  to{
-    transform:translateY(110vh) rotate(360deg);
-    opacity:0;
-  }
-}
-/* ---------------- TEXTE BRILLANT ---------------- */
 #timerText{
-  font-weight:bold;
-  text-align:center;
-  font-size:16px;
-  margin-top:8px;
-  background:linear-gradient(90deg,#fbbf24,#38bdf8,#f43f5e);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-  animation:shine 2s infinite alternate;
+ font-weight:bold;text-align:center;font-size:16px;margin-top:8px;
+ background:linear-gradient(90deg,#fbbf24,#38bdf8,#f43f5e);
+ -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+ animation:shine 2s infinite alternate;
 }
 @keyframes shine{
  0%{text-shadow:0 0 5px #fbbf24,0 0 10px #38bdf8;}
  50%{text-shadow:0 0 15px #f43f5e,0 0 25px #38bdf8;}
  100%{text-shadow:0 0 20px #fbbf24,0 0 30px #38bdf8;}
 }
-/* ---------------- PROGRESSION MULTI-COLOR ---------------- */
 #progressContainer{
  width:100%;background:#1e293b;height:20px;border-radius:10px;margin:10px 0;overflow:hidden;
 }
@@ -98,6 +77,7 @@ button.locked{background:#4b5563;color:#9ca3af;}
 }
 </style>
 </head>
+
 <body>
 <div class="app">
 <h1>🧠 DEEP WORK ZAKARIA</h1>
@@ -208,6 +188,40 @@ const timerText=document.getElementById("timerText");
 const tiredCheck=document.getElementById("tiredCheck");
 const progressBar=document.getElementById("progressBar");
 
+// ---------------- NOTIFICATION DEEP WORK ----------------
+if ("Notification" in window && Notification.permission === "default") {
+ Notification.requestPermission();
+}
+
+function showDeepWorkNotification(subject,time){
+ if(Notification.permission!=="granted") return;
+ const n=new Notification("🧠 Deep Work – Zakaria",{
+  body:`Zakaria, l’heure que vous avez promis à votre Deep Work est arrivée.\nMatière : ${subject} – ${time}`,
+  silent:true
+ });
+ setTimeout(()=>n.close(),600000);
+}
+let notifSent=false;
+
+setInterval(()=>{
+ if(!locked || notifSent) return;
+ const timeInput=startTime.value;
+ const subjectValue=subject.value;
+ if(!timeInput||!subjectValue) return;
+
+ const [h,m]=timeInput.split(":").map(Number);
+ const now=new Date();
+ const target=new Date();
+ target.setHours(h,m,0,0);
+
+ const diff=(target-now)/60000;
+ if(diff<=5 && diff>4){
+  showDeepWorkNotification(subjectValue,timeInput);
+  notifSent=true;
+ }
+ if(diff<-10) notifSent=false;
+},1000);
+
 // ---------------- CHOIX MATIÈRE ----------------
 subject.onchange=()=>{
  const d=durations[subject.value];
@@ -269,7 +283,6 @@ function startPhase(){
  run=true;
  rewardRain(p.emoji);
  progressBar.style.width="0%";
- // couleur multi-phase
  const colors={"Démarrage":"#0ea5e9","Focus total":"#22c55e","Mémoire active":"#8b5cf6","Pause":"#6b7280","Contrôle":"#f97316"};
  progressBar.style.background=colors[p.n]||"#22c55e";
 }
@@ -331,8 +344,8 @@ document.addEventListener("visibilitychange",()=>{
 // ---------------- UI badges, total, streak ----------------
 function updateUI(){
  const hours = Math.floor(stats.totalMinutes / 60);
-const minutes = stats.totalMinutes % 60;
-totalHours.innerText = `${hours} h ${minutes} min`;
+ const minutes = stats.totalMinutes % 60;
+ totalHours.innerText = hours>0 ? `${hours} h ${minutes} min` : `${minutes} min`;
  streak.innerText=stats.streak;
  badges.innerHTML="";
  if(stats.streak>=7) badges.innerHTML+="<div class='badge'>🥉 Alpha</div>";
