@@ -85,6 +85,17 @@ button.locked{background:#4b5563;color:#9ca3af;}
  50%{text-shadow:0 0 15px #f43f5e,0 0 25px #38bdf8;}
  100%{text-shadow:0 0 20px #fbbf24,0 0 30px #38bdf8;}
 }
+/* ---------------- PROGRESSION MULTI-COLOR ---------------- */
+#progressContainer{
+ width:100%;background:#1e293b;height:20px;border-radius:10px;margin:10px 0;overflow:hidden;
+}
+#progressBar{
+ height:100%;
+ width:0%;
+ background:#22c55e; 
+ transition: width 0.5s, background 0.5s;
+ border-radius:10px;
+}
 </style>
 </head>
 <body>
@@ -95,6 +106,10 @@ button.locked{background:#4b5563;color:#9ca3af;}
 <div class="timer" id="timer">
  <span id="timerEmoji">⏳</span>
  <span id="timerTime">--:--</span>
+</div>
+
+<div id="progressContainer">
+ <div id="progressBar"></div>
 </div>
 
 <div id="timerText" class="desc-box desc-focus">🚀 Démarrage imminent… Reste concentré !</div>
@@ -112,6 +127,10 @@ button.locked{background:#4b5563;color:#9ca3af;}
   <option>FRANÇAIS</option><option>MATHS</option><option>SVT</option>
   <option>MUSIQUE</option><option>ESPAGNOL</option><option>EDHC</option>
  </select>
+
+ <label>
+   <input type="checkbox" id="tiredCheck"> Je suis fatigué aujourd'hui (session courte)
+ </label>
 
  <div id="currentPhase" class="desc-box desc-demarrage">
   Phase actuelle : --
@@ -143,7 +162,7 @@ button.locked{background:#4b5563;color:#9ca3af;}
 </div>
 
 <script>
-// ---------------- CONFIGURATION DES PHASES ----------------
+// ---------------- CONFIG ----------------
 const phaseModels=[
  {n:"Démarrage",desc:"Libère ton esprit et mets-toi en mode concentration maximale.",class:"desc-demarrage",emoji:"🚀"},
  {n:"Focus total",desc:"Rien ne peut te détourner. Chaque seconde compte.",class:"desc-focus",emoji:"🔥"},
@@ -151,7 +170,6 @@ const phaseModels=[
  {n:"Pause",desc:"Respire et recharge ton énergie.",class:"desc-pause",emoji:"☕"},
  {n:"Contrôle",desc:"Teste-toi et progresse.",class:"desc-controle",emoji:"✅"}
 ];
-
 const durations={
  PC:[5,30,20,5,10],
  HG:[5,25,20,5,10],
@@ -165,7 +183,7 @@ const durations={
 };
 
 let phases=[],i=0,time=0,run=false,locked=false;
-let hardcoreTimeout;
+let sessionTotalTime=0,hardcoreTimeout;
 
 let stats=JSON.parse(localStorage.getItem("dwStats"))||{
  totalMinutes:0,
@@ -173,7 +191,7 @@ let stats=JSON.parse(localStorage.getItem("dwStats"))||{
  lastDay:null
 };
 
-// ---------------- UI ----------------
+// ---------------- ELEMENTS ----------------
 const timer=document.getElementById("timer");
 const status=document.getElementById("status");
 const startTime=document.getElementById("startTime");
@@ -187,8 +205,10 @@ const badges=document.getElementById("badges");
 const totalHours=document.getElementById("totalHours");
 const streak=document.getElementById("streak");
 const timerText=document.getElementById("timerText");
+const tiredCheck=document.getElementById("tiredCheck");
+const progressBar=document.getElementById("progressBar");
 
-// ---------------- Choix matière ----------------
+// ---------------- CHOIX MATIÈRE ----------------
 subject.onchange=()=>{
  const d=durations[subject.value];
  if(!d) return;
@@ -234,7 +254,11 @@ function rewardRain(emoji){
 // ---------------- START PHASE ----------------
 function startPhase(){
  const p=phases[i];
- time=p.d*60;
+ if(tiredCheck.checked){
+   time=10*60;
+   phases=[{...p,d:10}];
+ } else time=p.d*60;
+ sessionTotalTime=time;
  timerEmoji.innerText=p.emoji;
  descBox.className="desc-box "+p.class;
  descBox.innerText=p.desc;
@@ -244,19 +268,24 @@ function startPhase(){
  setStatus("▶️ En cours");
  run=true;
  rewardRain(p.emoji);
+ progressBar.style.width="0%";
+ // couleur multi-phase
+ const colors={"Démarrage":"#0ea5e9","Focus total":"#22c55e","Mémoire active":"#8b5cf6","Pause":"#6b7280","Contrôle":"#f97316"};
+ progressBar.style.background=colors[p.n]||"#22c55e";
 }
 
 // ---------------- FIN SESSION ----------------
 function finishSession(){
  run=false;
  setStatus("✅ Terminé");
- stats.totalMinutes += phases.reduce((a,b)=>a+b.d,0);
+ const total=phases.reduce((a,b)=>a+b.d,0);
+ stats.totalMinutes += total;
  const today=new Date().toDateString();
  if(stats.lastDay!==today) stats.streak++;
  stats.lastDay=today;
  localStorage.setItem("dwStats",JSON.stringify(stats));
  updateUI();
- setTimeout(()=>{setStatus("⏳ Attente");i=0;run=false;timerText.innerText="⏳ Prochaine session…";},60000);
+ setTimeout(()=>{setStatus("⏳ Attente");i=0;run=false;timerText.innerText="⏳ Prochaine session…";progressBar.style.width="0%";},60000);
 }
 
 // ---------------- TIMER ----------------
@@ -268,8 +297,12 @@ function updateTimer(){
 
 setInterval(()=>{
  if(run){
-  if(time>0){time--;updateTimer();}
-  else{i++;i<phases.length?startPhase():finishSession();}
+  if(time>0){
+   time--;
+   updateTimer();
+   const progressPercent = ((sessionTotalTime - time)/sessionTotalTime)*100;
+   progressBar.style.width = progressPercent+"%";
+  } else {i++;i<phases.length?startPhase():finishSession();}
  }
 },1000);
 
@@ -283,17 +316,15 @@ setInterval(()=>{
  }
 },1000);
 
-// ---------------- HARDCORE CORRIGÉ ----------------
+// ---------------- HARDCORE ----------------
 document.addEventListener("visibilitychange",()=>{
   if(run){
     if(document.hidden){
       hardcoreTimeout = setTimeout(()=>{
         alert("❌ Session annulée (Hardcore)");
         location.reload();
-      },3000); // 3 secondes
-    } else {
-      clearTimeout(hardcoreTimeout);
-    }
+      },3000);
+    } else { clearTimeout(hardcoreTimeout); }
   }
 });
 
