@@ -1,4 +1,4 @@
-// Configuration Web Firebase du projet IVOIRENOVA.
+// Configuration Firebase IVOIRENOVA
 window.IVOIRENOVA_FIREBASE_CONFIG = {
   apiKey: "AIzaSyChJikpXaNeylmwJIb9RB1VfewEv4PGKck",
   authDomain: "ivoirenova-33758.firebaseapp.com",
@@ -6,6 +6,6 @@ window.IVOIRENOVA_FIREBASE_CONFIG = {
   projectId: "ivoirenova-33758",
   storageBucket: "ivoirenova-33758.firebasestorage.app",
   messagingSenderId: "713543887092",
-  appId: "1:713543887092:web:5c375c0a1ce200645956a1",
-  measurementId: "G-RZ3D5TE82R"
+  appId: "1:713543887092:web:afab0e901b812bc95956a1",
+  measurementId: "G-QR4Q9RZ899"
 };
