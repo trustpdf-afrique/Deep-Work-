@@ -1,0 +1,18 @@
+name: Validate ZAKARIA AI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check required files
+        run: |
+          test -f index.html
+          test -f api-config.js
+          ! grep -RniE 'AIza|GEMINI_API_KEY[[:space:]]*=' index.html api-config.js || (echo 'Secret-like API key found in public files' && exit 1)
+          ! grep -Rni 'workers.dev' . --exclude-dir=.git || (echo 'Cloudflare Worker reference found' && exit 1)
+          echo 'Validation OK'
