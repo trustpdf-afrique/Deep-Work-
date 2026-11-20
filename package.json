@@ -1,0 +1,11 @@
+{
+  "name": "ivoirenova-gemini-backend",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@google/genai": "3.6.1"
+  }
+}
