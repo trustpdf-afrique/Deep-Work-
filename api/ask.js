@@ -1,4 +1,4 @@
-import { answerWithGemini, handleError, setCors } from '../_lib/gemini.js';
+import { answerWithGemini, handleError, setCors } from './_lib/gemini.js';
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -9,8 +9,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Cette route reçoit actuellement le contexte de la conversation.
-    // La recherche dans les PDF/Firebase devra être ajoutée séparément.
     const answer = await answerWithGemini(req.body || {});
     return res.status(200).json({ answer });
   } catch (error) {
