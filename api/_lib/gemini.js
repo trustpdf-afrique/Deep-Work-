@@ -13,14 +13,8 @@ export function setCors(req, res) {
   }
 
   res.setHeader('Vary', 'Origin');
-  res.setHeader(
-    'Access-Control-Allow-Methods',
-    'POST, OPTIONS'
-  );
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'Content-Type'
-  );
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
 export async function answerWithGemini(data = {}) {
@@ -30,11 +24,28 @@ export async function answerWithGemini(data = {}) {
     throw new Error('Clé Gemini absente sur le serveur.');
   }
 
+  // Récupération des messages envoyés par IVOIRENOVA
+  const messages = Array.isArray(data.messages)
+    ? data.messages
+    : Array.isArray(data.history)
+      ? data.history
+      : [];
+
+  // Recherche de la dernière question de l'élève
+  const lastUserIndex = messages.map(
+    m => m.role === 'user'
+  ).lastIndexOf(true);
+
+  const lastUserMessage =
+    lastUserIndex >= 0 ? messages[lastUserIndex] : null;
+
   const question =
     data.message ||
     data.prompt ||
     data.question ||
     data.text ||
+    lastUserMessage?.text ||
+    lastUserMessage?.content ||
     '';
 
   if (typeof question !== 'string' || !question.trim()) {
@@ -63,28 +74,37 @@ RÈGLES :
 - Si une information manque, dis-le honnêtement.
 - Sois encourageant, patient et pédagogique.
 
-Nom de l'application : IVOIRENOVA.
+Nom : IVOIRENOVA.
 Slogan : Apprendre autrement, réussir ensemble.
-  `;
+`;
 
+  // Conservation de l'historique de conversation
   const contents = [];
 
-  if (Array.isArray(data.history)) {
-    for (const item of data.history.slice(-12)) {
-      const role =
-        item.role === 'assistant' || item.role === 'model'
-          ? 'model'
-          : 'user';
+  for (const item of messages.slice(-12)) {
+    const role = item.role === 'assistant' || item.role === 'model'
+      ? 'model'
+      : 'user';
 
-      const text = item.content || item.text || item.message;
+    const messageText = item.text || item.content || item.message;
 
-      if (typeof text === 'string' && text.trim()) {
-        contents.push({
-          role,
-          parts: [{ text }]
-        });
-      }
+    if (
+      typeof messageText === 'string' &&
+      messageText.trim()
+    ) {
+      contents.push({
+        role,
+        parts: [{ text: messageText }]
+      });
     }
+  }
+
+  // Évite de répéter la dernière question
+  if (lastUserIndex >= 0) {
+    contents.splice(
+      contents.length - 1,
+      1
+    );
   }
 
   let finalPrompt = question;
@@ -100,7 +120,7 @@ ${question}
 
 Utilise prioritairement ces informations pour répondre.
 Si elles ne permettent pas de répondre, précise-le.
-    `;
+`;
   }
 
   contents.push({
