@@ -144,7 +144,7 @@ Si elles ne permettent pas de répondre, précise-le.
         contents,
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 2048
+          maxOutputTokens: 1024
         }
       })
     }
