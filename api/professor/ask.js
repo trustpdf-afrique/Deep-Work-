@@ -72,7 +72,13 @@ export default async function handler(req, res) {
     const question = String(lastQuestion?.text || lastQuestion?.content || req.body?.message || '').trim();
     if (!question) return res.status(400).json({ error: 'Veuillez écrire une question.' });
 
-    const documents = await readAdminInformation(idToken);
+    // Ne consulter la bibliothèque administrateur que si la question la concerne.
+    const asksAboutIvoireNova = /ivoirenova|zakaria|zakariatv|créateur|createur|fondateur|fondatrice|administrateur|application|abonnement|fonctionnalité|fonctionnalite|service|slogan|origine|qui a créé|qui est à l'origine/i.test(question);
+    let documents = [];
+    if (asksAboutIvoireNova) {
+      try { documents = await readAdminInformation(idToken); }
+      catch (lookupError) { console.warn('Bibliothèque administrateur momentanément indisponible :', lookupError.message); }
+    }
     const knowledgeParts = [];
     let pdfsRead = 0;
     for (const doc of documents) {
