@@ -14,10 +14,10 @@ export function setCors(req, res) {
 
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
-export async function answerWithGemini(data = {}) {
+export async function answerWithGemini(data = {}, options = {}) {
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
@@ -53,12 +53,13 @@ export async function answerWithGemini(data = {}) {
   }
 
   const courseContext =
+    options.context ||
     data.courseText ||
     data.context ||
     data.knowledge ||
     '';
 
-  const systemInstruction = `
+  const systemInstruction = options.systemInstruction || `
 Tu es IVOIRENOVA, un professeur particulier d'intelligence artificielle
 créé par ZAKARIA NIAMPA en Côte d'Ivoire.
 
